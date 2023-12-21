@@ -5,7 +5,7 @@ Alongside being a personal project to further study C# & application development
 
 At this current stage, nothing can actually be edited. The only aspect of this application that works right now is the ability to preview bitmaps & animations. This application does the best that it currently can to preview the animations as-intended by FeelingPomu2nd. The application can only display a single chara at runtime, and will only point to `chara/chara.chp`.
 
-## Controls :
+## Controls
 
 ### Previewing Bitmaps
 
