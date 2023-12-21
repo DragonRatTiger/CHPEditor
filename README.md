@@ -11,7 +11,7 @@ At this current stage, nothing can actually be edited. The only aspect of this a
 
 `[` to switch to Bitmap mode
 
-`1` through `8` for displaying CharBMP, CharBMP2P, CharFace, CharFace2P, SelectCG, SelectCG2P, CharTex, and CharTex2P respectively.
+`1/2/3/4/5/6/7/8` for displaying CharBMP, CharBMP2P, CharFace, CharFace2P, SelectCG, SelectCG2P, CharTex, and CharTex2P respectively.
 
 ### Previewing Animations
 
@@ -21,6 +21,6 @@ At this current stage, nothing can actually be edited. The only aspect of this a
 
 `P` to pause the Animation
 
-`1` through `9` for Animations #1 through #9 respectively
+`1/2/3/4/5/6/7/8/9` for Animations #1 through #9 respectively
 
 `Q/W/E/R/T/Y/U/I/O` for Animations #10 through #18 respectively
