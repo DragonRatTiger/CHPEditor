@@ -3,6 +3,7 @@ using SDL2;
 using System.Diagnostics;
 using ImGuiNET;
 
+using static SDL2.SDL;
 
 string listenerpath;
 if (false) // Placeholder, will make toggleable later
@@ -23,38 +24,40 @@ Trace.Listeners.Add(new TextWriterTraceListener(writer));
 Trace.AutoFlush = true;
 
 #region SDL Setup
-SDL.SDL_GetVersion(out SDL.SDL_version ver);
+SDL_GetVersion(out SDL_version ver);
 Trace.TraceInformation("Running SDL Version " + ver.major.ToString() + "." + ver.minor.ToString() + "." + ver.patch.ToString());
 
-if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
+if (SDL_Init(SDL_INIT_VIDEO) < 0)
 {
-    Trace.TraceError("Something went wrong while initializing SDL. {0}", SDL.SDL_GetError());
+    Trace.TraceError("Something went wrong while initializing SDL. {0}", SDL_GetError());
     return;
 }
-// IME here
 
-var appWindow = SDL.SDL_CreateWindow(
+var appWindow = SDL_CreateWindow(
     "CHPEditor INDEV " + System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString()
 #if DEBUG
     + " (DEBUG)"
 #endif
     ,
-    SDL.SDL_WINDOWPOS_UNDEFINED,
-    SDL.SDL_WINDOWPOS_UNDEFINED,
+    SDL_WINDOWPOS_UNDEFINED,
+    SDL_WINDOWPOS_UNDEFINED,
     640,
     480,
-    SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN | SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+    SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI);
 
 if (appWindow == IntPtr.Zero)
-    Trace.TraceError("Something went wrong while creating the window. {0}", SDL.SDL_GetError());
+    Trace.TraceError("Something went wrong while creating the window. {0}", SDL_GetError());
 
-var renderer = SDL.SDL_CreateRenderer(appWindow,
+var renderer = SDL_CreateRenderer(appWindow,
     -1,
-    SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED |
-    SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+    SDL_RendererFlags.SDL_RENDERER_ACCELERATED |
+    SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 
 if (renderer == IntPtr.Zero)
-    Trace.TraceError("Something went wrong while creating the renderer. {0}", SDL.SDL_GetError());
+    Trace.TraceError("Something went wrong while creating the renderer. {0}", SDL_GetError());
+
+SDL_ShowWindow(appWindow);
+SDL_RaiseWindow(appWindow);
 #endregion
 
 //#region ImGui Setup
@@ -66,10 +69,10 @@ if (renderer == IntPtr.Zero)
 
 //ImGui.StyleColorsDark();
 
-//SDL.SDL_SysWMinfo info = default;
-//SDL.SDL_VERSION(out info.version);
+//SDL_SysWMinfo info = default;
+//SDL_VERSION(out info.version);
 
-//if (SDL.SDL_GetWindowWMInfo(appWindow, ref info) == SDL.SDL_bool.SDL_TRUE)
+//if (SDL_GetWindowWMInfo(appWindow, ref info) == SDL_bool.SDL_TRUE)
 //{
 //    ImGuiViewportPtr viewport = ImGui.GetMainViewport();
 //    viewport.PlatformHandleRaw = info.info.win.window;
@@ -86,8 +89,8 @@ int bmpstate = 0;
 int anishow = 1;
 int anistate = 0;
 
-SDL.SDL_Rect srcrect = new SDL.SDL_Rect() { x = 0, y = 0, w = 1, h = 1 };
-SDL.SDL_Rect dstrect = new SDL.SDL_Rect() { x = 0, y = 0, w = 1, h = 1 };
+SDL_Rect srcrect = new SDL_Rect() { x = 0, y = 0, w = 1, h = 1 };
+SDL_Rect dstrect = new SDL_Rect() { x = 0, y = 0, w = 1, h = 1 };
 
 Trace.TraceInformation("Currently in directory " + Environment.CurrentDirectory);
 CHPFile chpFile;
@@ -100,41 +103,41 @@ bool pause = false;
 while (running)
 {
     if (!pause)
-        tick = SDL.SDL_GetTicks64();
+        tick = SDL_GetTicks64();
 
-    while (SDL.SDL_PollEvent(out SDL.SDL_Event output) == 1)
+    while (SDL_PollEvent(out SDL_Event output) == 1)
     {
         switch (output.type)
         {
-            case SDL.SDL_EventType.SDL_QUIT:
+            case SDL_EventType.SDL_QUIT:
                 Trace.TraceInformation("Time to quit!");
                 running = false;
                 break;
-            case SDL.SDL_EventType.SDL_KEYDOWN:
+            case SDL_EventType.SDL_KEYDOWN:
                 switch (output.key.keysym.sym)
                 {
                     #region Toggle between bitmaps & animation
-                    case SDL.SDL_Keycode.SDLK_LEFTBRACKET:
+                    case SDL_Keycode.SDLK_LEFTBRACKET:
                         anitoggle = false;
                         Trace.TraceInformation("Switching to Bitmap mode");
                         break;
-                    case SDL.SDL_Keycode.SDLK_RIGHTBRACKET:
+                    case SDL_Keycode.SDLK_RIGHTBRACKET:
                         anitoggle = true;
                         Trace.TraceInformation("Switching to Animation mode");
                         break;
-                    case SDL.SDL_Keycode.SDLK_SPACE:
+                    case SDL_Keycode.SDLK_SPACE:
                         use2P = !use2P;
                         Trace.TraceInformation("Switching to " + (use2P ? "2P" : "1P") + " palette for Animation");
                         break;
                     #endregion
                     #region Pause Toggle
-                    case SDL.SDL_Keycode.SDLK_p:
+                    case SDL_Keycode.SDLK_p:
                         pause = !pause;
                         Trace.TraceInformation("Pause is set to {0}", pause);
                         break;
                     #endregion
                     #region Switch Keys
-                    case SDL.SDL_Keycode.SDLK_1:
+                    case SDL_Keycode.SDLK_1:
                         if (anitoggle)
                         {
                             anishow = 1;
@@ -146,7 +149,7 @@ while (running)
                             Trace.TraceInformation("CharBMP");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_2:
+                    case SDL_Keycode.SDLK_2:
                         if (anitoggle)
                         {
                             anishow = 2;
@@ -158,7 +161,7 @@ while (running)
                             Trace.TraceInformation("CharBMP2P");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_3:
+                    case SDL_Keycode.SDLK_3:
                         if (anitoggle)
                         {
                             anishow = 3;
@@ -170,7 +173,7 @@ while (running)
                             Trace.TraceInformation("CharFace");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_4:
+                    case SDL_Keycode.SDLK_4:
                         if (anitoggle)
                         {
                             anishow = 4;
@@ -182,7 +185,7 @@ while (running)
                             Trace.TraceInformation("CharFace2P");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_5:
+                    case SDL_Keycode.SDLK_5:
                         if (anitoggle)
                         {
                             anishow = 5;
@@ -194,7 +197,7 @@ while (running)
                             Trace.TraceInformation("SelectCG");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_6:
+                    case SDL_Keycode.SDLK_6:
                         if (anitoggle)
                         {
                             anishow = 6;
@@ -206,7 +209,7 @@ while (running)
                             Trace.TraceInformation("SelectCG2P");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_7:
+                    case SDL_Keycode.SDLK_7:
                         if (anitoggle)
                         {
                             anishow = 7;
@@ -218,7 +221,7 @@ while (running)
                             Trace.TraceInformation("CharTex");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_8:
+                    case SDL_Keycode.SDLK_8:
                         if (anitoggle)
                         {
                             anishow = 8;
@@ -230,70 +233,70 @@ while (running)
                             Trace.TraceInformation("CharTex2P");
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_9:
+                    case SDL_Keycode.SDLK_9:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 9 (Great - Opponent Miss - Rival)");
                             anishow = 9;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_q:
+                    case SDL_Keycode.SDLK_q:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 10 (Bad - Player hits Fever)");
                             anishow = 10;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_w:
+                    case SDL_Keycode.SDLK_w:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 11 (Bad - Player hits Great)");
                             anishow = 11;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_e:
+                    case SDL_Keycode.SDLK_e:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 12 (Bad - Player hits Good)");
                             anishow = 12;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_r:
+                    case SDL_Keycode.SDLK_r:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 13 (Unknown? - Need Clarification)");
                             anishow = 13;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_t:
+                    case SDL_Keycode.SDLK_t:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 14 (Dance)");
                             anishow = 14;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_y:
+                    case SDL_Keycode.SDLK_y:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 15 (Win)");
                             anishow = 15;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_u:
+                    case SDL_Keycode.SDLK_u:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 16 (Lose)");
                             anishow = 16;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_i:
+                    case SDL_Keycode.SDLK_i:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 17 (Fever Win)");
                             anishow = 17;
                         }
                         break;
-                    case SDL.SDL_Keycode.SDLK_o:
+                    case SDL_Keycode.SDLK_o:
                         if (anitoggle)
                         {
                             Trace.TraceInformation("State 18 (Disturbed - Attacked by Ojama)");
@@ -310,11 +313,11 @@ while (running)
         }
     }
 
-    if (SDL.SDL_SetRenderDrawColor(renderer, 200, 200, 255, 255) < 0)
-        Trace.TraceError("Couldn't set the render draw color. {0}", SDL.SDL_GetError());
+    if (SDL_SetRenderDrawColor(renderer, 200, 200, 255, 255) < 0)
+        Trace.TraceError("Couldn't set the render draw color. {0}", SDL_GetError());
 
-    if (SDL.SDL_RenderClear(renderer) < 0)
-        Trace.TraceError("Couldn't clear the render. {0}", SDL.SDL_GetError());
+    if (SDL_RenderClear(renderer) < 0)
+        Trace.TraceError("Couldn't clear the render. {0}", SDL_GetError());
     if (!anitoggle)
         switch (bmpshow)
         {
@@ -346,7 +349,7 @@ while (running)
     else
         RenderAnimation(renderer, ref chpFile);
 
-    SDL.SDL_RenderPresent(renderer);
+    SDL_RenderPresent(renderer);
     Trace.Flush();
 }
 void RenderTex(IntPtr renderer, IntPtr tex)
@@ -359,17 +362,17 @@ void RenderTex(IntPtr renderer, IntPtr tex)
             bmpstate = bmpshow;
             return;
         }
-        int query = SDL.SDL_QueryTexture(tex, out uint format, out int access, out int w, out int h);
+        int query = SDL_QueryTexture(tex, out uint format, out int access, out int w, out int h);
         if (query != 0)
-            Trace.TraceWarning("Could not query the given texture. {0}", SDL.SDL_GetError());
+            Trace.TraceWarning("Could not query the given texture. {0}", SDL_GetError());
 
-        srcrect = new SDL.SDL_Rect() { x = 0, y = 0, w = w, h = h };
+        srcrect = new SDL_Rect() { x = 0, y = 0, w = w, h = h };
         dstrect = srcrect;
 
         bmpstate = bmpshow;
     }
     if (tex != IntPtr.Zero)
-        SDL.SDL_RenderCopy(renderer, tex, ref srcrect, ref dstrect);
+        SDL_RenderCopy(renderer, tex, ref srcrect, ref dstrect);
 }
 void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
 {
@@ -379,25 +382,25 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
         int state = anishow - 1;
         anistate = anishow;
 
-        SDL.SDL_GetWindowSize(appWindow, out int anchor_x, out int anchor_y);
+        SDL_GetWindowSize(appWindow, out int anchor_x, out int anchor_y);
         anchor_x = (anchor_x / 2) - (chpfile.Size[0] / 2);
         anchor_y = (anchor_y / 2) - (chpfile.Size[1] / 2);
 
-        SDL.SDL_Rect dst = new SDL.SDL_Rect() { x = anchor_x, y = anchor_y, w = chpfile.Size[0], h = chpfile.Size[1] };
+        SDL_Rect dst = new SDL_Rect() { x = anchor_x, y = anchor_y, w = chpfile.Size[0], h = chpfile.Size[1] };
 
-        SDL.SDL_Rect namedst = new SDL.SDL_Rect() { x = anchor_x, y = anchor_y - chpfile.RectCollection[0].h, w = chpfile.RectCollection[0].w, h = chpfile.RectCollection[0].h };
+        SDL_Rect namedst = new SDL_Rect() { x = anchor_x, y = anchor_y - chpfile.RectCollection[0].h, w = chpfile.RectCollection[0].w, h = chpfile.RectCollection[0].h };
 
         // Name logo & background
         if (state != 13) // Don't display during Dance
         {
             if (use2P && chpfile.CharBMP2P != IntPtr.Zero)
             {
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP2P,
                     ref chpfile.RectCollection[1],
                     ref dst);
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP2P,
                     ref chpfile.RectCollection[0],
@@ -405,12 +408,12 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
             }
             else
             {
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP,
                     ref chpfile.RectCollection[1],
                     ref dst);
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP,
                     ref chpfile.RectCollection[0],
@@ -440,13 +443,13 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
             int data = chpfile.AnimeCollection[state].Pattern[currentframe];
 
             if (use2P && chpfile.CharBMP2P != IntPtr.Zero)
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP2P,
                     ref chpfile.RectCollection[data],
                     ref dst);
             else
-                SDL.SDL_RenderCopy(
+                SDL_RenderCopy(
                     renderer,
                     chpfile.CharBMP,
                     ref chpfile.RectCollection[data],
@@ -462,7 +465,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                 int srcdata = texture[currentframe][0];
                 byte alpha = 0xFF;
                 double rot = 0;
-                SDL.SDL_Rect texdst = new SDL.SDL_Rect();
+                SDL_Rect texdst = new SDL_Rect();
 
                 bool[] isInterpole = new bool[4];
 
@@ -478,7 +481,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                                 switch (j)
                                 {
                                     case 1:
-                                        texdst = new SDL.SDL_Rect() {
+                                        texdst = new SDL_Rect() {
                                             x = (int)(chpfile.RectCollection[inter[j][k][2]].x + anchor_x + ((chpfile.RectCollection[inter[j][k][3]].x - chpfile.RectCollection[inter[j][k][2]].x) * progress)),
                                             y = (int)(chpfile.RectCollection[inter[j][k][2]].y + anchor_y + ((chpfile.RectCollection[inter[j][k][3]].y - chpfile.RectCollection[inter[j][k][2]].y) * progress)),
                                             w = (int)(chpfile.RectCollection[inter[j][k][2]].w + ((chpfile.RectCollection[inter[j][k][3]].w - chpfile.RectCollection[inter[j][k][2]].w) * progress)),
@@ -503,7 +506,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                 if (!isInterpole[1])
                 {
                     int dstdata = texture[currentframe][1];
-                    texdst = new SDL.SDL_Rect() { x = chpfile.RectCollection[dstdata].x + anchor_x, y = chpfile.RectCollection[dstdata].y + anchor_y, w = chpfile.RectCollection[srcdata].w, h = chpfile.RectCollection[srcdata].h };
+                    texdst = new SDL_Rect() { x = chpfile.RectCollection[dstdata].x + anchor_x, y = chpfile.RectCollection[dstdata].y + anchor_y, w = chpfile.RectCollection[srcdata].w, h = chpfile.RectCollection[srcdata].h };
                 }
                 if (!isInterpole[2])
                 {
@@ -516,13 +519,13 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
 
                 if (use2P && chpfile.CharTex2P != IntPtr.Zero)
                 {
-                    SDL.SDL_Point point = new SDL.SDL_Point()
+                    SDL_Point point = new SDL_Point()
                     {
                         x = texdst.w / 2,
                         y = texdst.h / 2
                     };
-                    SDL.SDL_SetTextureAlphaMod(chpfile.CharTex2P, alpha);
-                    SDL.SDL_RenderCopyEx(
+                    SDL_SetTextureAlphaMod(chpfile.CharTex2P, alpha);
+                    SDL_RenderCopyEx(
                         renderer,
                         chpfile.CharTex2P,
                         ref chpfile.RectCollection[srcdata],
@@ -530,17 +533,17 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                         -rot,
                         ref point,
                         0);
-                    SDL.SDL_SetTextureAlphaMod(chpfile.CharTex2P, 0xFF);
+                    SDL_SetTextureAlphaMod(chpfile.CharTex2P, 0xFF);
                 }
                 else
                 {
-                    SDL.SDL_Point point = new SDL.SDL_Point()
+                    SDL_Point point = new SDL_Point()
                     {
                         x = texdst.w / 2,
                         y = texdst.h / 2
                     };
-                    SDL.SDL_SetTextureAlphaMod(chpfile.CharTex, alpha);
-                    SDL.SDL_RenderCopyEx(
+                    SDL_SetTextureAlphaMod(chpfile.CharTex, alpha);
+                    SDL_RenderCopyEx(
                         renderer,
                         chpfile.CharTex,
                         ref chpfile.RectCollection[srcdata],
@@ -548,7 +551,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                         -rot,
                         ref point,
                         0);
-                    SDL.SDL_SetTextureAlphaMod(chpfile.CharTex, 0xFF);
+                    SDL_SetTextureAlphaMod(chpfile.CharTex, 0xFF);
                 }
             }
         }
@@ -558,7 +561,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
             {
                 int[][] layer = chpfile.AnimeCollection[state].Layer[i];
                 int[][][] inter = chpfile.InterpolateCollection[state].Layer[i];
-                SDL.SDL_Rect laydst = new SDL.SDL_Rect();
+                SDL_Rect laydst = new SDL_Rect();
 
                 bool isInterpole = false;
 
@@ -571,7 +574,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                             if (currenttime >= inter[1][j][0] && currenttime <= (inter[1][j][1] + inter[1][j][0]))
                             {
                                 double progress = (double)(currenttime - inter[1][j][0]) / (double)inter[1][j][1];
-                                laydst = new SDL.SDL_Rect()
+                                laydst = new SDL_Rect()
                                 {
                                     x = (int)(chpfile.RectCollection[inter[1][j][2]].x + anchor_x + ((chpfile.RectCollection[inter[1][j][3]].x - chpfile.RectCollection[inter[1][j][2]].x) * progress)),
                                     y = (int)(chpfile.RectCollection[inter[1][j][2]].y + anchor_y + ((chpfile.RectCollection[inter[1][j][3]].y - chpfile.RectCollection[inter[1][j][2]].y) * progress)),
@@ -586,24 +589,24 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
                 if (!isInterpole && layer[currentframe][1] >= 0)
                 {
                     int dstdata = layer[currentframe][1];
-                    laydst = new SDL.SDL_Rect() { x = chpfile.RectCollection[dstdata].x + anchor_x, y = chpfile.RectCollection[dstdata].y + anchor_y, w = chpfile.RectCollection[dstdata].w, h = chpfile.RectCollection[dstdata].h };
+                    laydst = new SDL_Rect() { x = chpfile.RectCollection[dstdata].x + anchor_x, y = chpfile.RectCollection[dstdata].y + anchor_y, w = chpfile.RectCollection[dstdata].w, h = chpfile.RectCollection[dstdata].h };
                 }
 
                 int srcdata = layer[currentframe][0];
-                SDL.SDL_RenderSetClipRect(renderer, ref dst); // Layer can not cross its size boundaries, so anything extra must be cropped out
+                SDL_RenderSetClipRect(renderer, ref dst); // Layer can not cross its size boundaries, so anything extra must be cropped out
                 if (use2P && chpfile.CharBMP2P != IntPtr.Zero)
-                    SDL.SDL_RenderCopy(
+                    SDL_RenderCopy(
                         renderer,
                         chpfile.CharBMP2P,
                         ref chpfile.RectCollection[srcdata],
                         ref laydst);
                 else
-                    SDL.SDL_RenderCopy(
+                    SDL_RenderCopy(
                         renderer,
                         chpfile.CharBMP,
                         ref chpfile.RectCollection[srcdata],
                         ref laydst);
-                SDL.SDL_RenderSetClipRect(renderer, IntPtr.Zero);
+                SDL_RenderSetClipRect(renderer, IntPtr.Zero);
             }
         }
     }
@@ -615,7 +618,7 @@ void RenderAnimation(IntPtr renderer, ref CHPFile chpfile)
 }
 
 chpFile.Dispose();
-SDL.SDL_DestroyRenderer(renderer);
-SDL.SDL_DestroyWindow(appWindow);
-SDL.SDL_Quit();
+SDL_DestroyRenderer(renderer);
+SDL_DestroyWindow(appWindow);
+SDL_Quit();
 Trace.Flush();
