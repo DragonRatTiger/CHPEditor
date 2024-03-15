@@ -1,13 +1,23 @@
-﻿using SDL2;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
-using System.Runtime.InteropServices;
+using System.IO;
+using System.Linq;
+using System.Text;
+using Silk.NET.Maths;
+using Silk.NET.OpenGL;
+using StbImageSharp;
+
+using static CHPEditor.Program;
 
 namespace CHPEditor
 {
     internal class CHPFile : IDisposable
     {
         public string FileName;
+        public Encoding FileEncoding { get; private set; }
         public struct AnimeData
         {
             public bool Loaded;
@@ -23,42 +33,88 @@ namespace CHPEditor
             public List<int[][][]> Layer;
             public List<int[][][]> Texture;
         }
+        public struct BitmapData
+        {
+            public ImageResult Image;
+            public bool UseColorKey;
+            public Color ColorKey;
+            public Vector2D<int> Bounds
+            { 
+                get
+                {
+                    if (Image != null)
+                        return new Vector2D<int>(Image.Width, Image.Height);
+                    else
+                        return new Vector2D<int>(1, 1);
+                }
+            }
+            public string Path
+            {
+                get
+                {
+                    return _path;
+                } 
+                set
+                {
+                    _path = value;
+                    if (File.Exists(_path))
+                        Image = ImageResult.FromMemory(File.ReadAllBytes(Path), ColorComponents.RedGreenBlueAlpha);
+                } 
+            }
+            private string _path;
+            public uint Pointer;
+        }
 
         public string CharName,
             Artist;
-        public string CharFile { get; private set; }
-        public IntPtr CharBMP,
+        public string CharFile { get; protected set; }
+        public BitmapData CharBMP,
             CharBMP2P,
             CharFace,
             CharFace2P,
             SelectCG,
             SelectCG2P,
             CharTex,
-            CharTex2P = IntPtr.Zero;
-        //public string CharBMPPath, // unused for the moment
-        //    CharBMP2PPath,
-        //    CharFacePath,
-        //    CharFace2PPath,
-        //    SelectCGPath,
-        //    SelectCG2PPath,
-        //    CharTexPath,
-        //    CharTex2PPath;
+            CharTex2P;
 
-        public int[] ColorSet = new int[4] { 0, 0, 0, 255 };
         public int Anime = 83;
         public int[] Size = new int[2] { 167, 271 };
         public int Wait = 1;
         public int Data = 16; // Required for hexadecimal conversion
 
-        public SDL.SDL_Rect[] RectCollection;
+        public Rectangle<int>[] RectCollection;
 
         public AnimeData[] AnimeCollection { get; protected set; }
         public InterpolateData[] InterpolateCollection { get; protected set; }
-        public CHPFile(IntPtr renderer, string filename)
+        public CHPFile(string filename)
         {
             try
             {
                 string filedata = File.ReadAllText(filename);
+                // TEST
+                using (var fs = File.OpenRead(filename))
+                {
+                    Ude.CharsetDetector cdet = new Ude.CharsetDetector();
+                    cdet.Feed(fs);
+                    cdet.DataEnd();
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    if (cdet.Charset != null)
+                    {
+                        foreach (EncodingInfo encodinginfo in Encoding.GetEncodings())
+                        {
+                            if (string.Equals(encodinginfo.Name, cdet.Charset, StringComparison.InvariantCultureIgnoreCase))
+                                FileEncoding = encodinginfo.GetEncoding();
+                        }
+                        if (FileEncoding == null)
+                            FileEncoding = Encoding.GetEncoding(932);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Detection failed.");
+                        FileEncoding = Encoding.UTF8;
+                    }
+                }
+                // TEST
                 string folderpath = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar;
                 FileName = Path.GetFileName(filename);
 
@@ -90,46 +146,46 @@ namespace CHPEditor
                             #endregion
                             #region Bitmaps
                             case "#CharBMP":
-                                LoadTexture(ref renderer, ref CharBMP, folderpath + split[1]);
-                                if (CharBMP == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharBMP. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharBMP, folderpath + split[1]);
+                                //if (CharBMP == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharBMP. " + SDL.SDL_GetError().ToString());
                                 break;
 
                             case "#CharBMP2P":
-                                LoadTexture(ref renderer, ref CharBMP2P, folderpath + split[1]);
-                                if (CharBMP2P == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharBMP2P. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharBMP2P, folderpath + split[1]);
+                                //if (CharBMP2P == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharBMP2P. " + SDL.SDL_GetError().ToString());
                                 break;
 
                             // Regarding CharFace's background, ColorSet is ignored, and always uses Black (0,0,0,255) as the transparency color.
                             // This is my assumption at least, as every single CharFace I've looked at uses a pure black background.
                             case "#CharFace":
-                                LoadTexture(ref renderer, ref CharFace, folderpath + split[1], 1, 0, 0, 0);
-                                if (CharFace == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharFace. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharFace, folderpath + split[1], 1, 0, 0, 0);
+                                //if (CharFace == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharFace. " + SDL.SDL_GetError().ToString());
                                 break;
 
                             case "#CharFace2P":
-                                LoadTexture(ref renderer, ref CharFace2P, folderpath + split[1], 1, 0, 0, 0);
-                                if (CharFace2P == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharFace2P. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharFace2P, folderpath + split[1], 1, 0, 0, 0);
+                                //if (CharFace2P == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharFace2P. " + SDL.SDL_GetError().ToString());
                                 break;
 
                             case "#SelectCG":
                                 string cgfile = split[1];
                                 string cgfile2 = cgfile.Replace("1p", "2p");
 
-                                LoadTexture(ref renderer, ref SelectCG, folderpath + cgfile, 0);
-                                if (SelectCG == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load SelectCG. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref SelectCG, folderpath + cgfile, 0);
+                                //if (SelectCG == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load SelectCG. " + SDL.SDL_GetError().ToString());
 
                                 // 2P version of SelectCG. For some reason, #SelectCG2P does not exist on any CHP that I've seen, but the 2P icon is still loaded anyways.
                                 // This is my assumption of how it's loaded.
                                 if (File.Exists(folderpath + cgfile2) && cgfile2.Contains("1p"))
                                 {
-                                    LoadTexture(ref renderer, ref SelectCG2P, folderpath + cgfile2, 0);
-                                    if (SelectCG2P == IntPtr.Zero)
-                                        Trace.TraceError("Couldn't load SelectCG's 2P equivalent. " + SDL.SDL_GetError().ToString());
+                                    LoadTexture(ref SelectCG2P, folderpath + cgfile2, 0);
+                                    //if (SelectCG2P == IntPtr.Zero)
+                                    //    Trace.TraceError("Couldn't load SelectCG's 2P equivalent. " + SDL.SDL_GetError().ToString());
                                 }
                                 else
                                     Trace.TraceWarning("SelectCG's 2P equivalent couldn't be found. If you don't have a 2P palette, or if you prefer to not use a 2P icon, you can ignore this message. Otherwise, you may want to check that your file is named correctly. (Try replacing \"1p\" with \"2p\")");
@@ -137,25 +193,25 @@ namespace CHPEditor
                                 break;
 
                             case "#CharTex":
-                                LoadTexture(ref renderer, ref CharTex, folderpath + split[1]);
-                                if (CharTex == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharTex. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharTex, folderpath + split[1]);
+                                //if (CharTex == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharTex. " + SDL.SDL_GetError().ToString());
                                 break;
 
                             case "#CharTex2P":
-                                LoadTexture(ref renderer, ref CharTex2P, folderpath + split[1]);
-                                if (CharTex2P == IntPtr.Zero)
-                                    Trace.TraceError("Couldn't load CharTex2P. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref CharTex2P, folderpath + split[1]);
+                                //if (CharTex2P == IntPtr.Zero)
+                                //    Trace.TraceError("Couldn't load CharTex2P. " + SDL.SDL_GetError().ToString());
                                 break;
                             #endregion
                             #region Chara parameters
                             case "#AutoColorSet":
                                 // This should only run after #CharBMP has been loaded.
-                                if (CharBMP == IntPtr.Zero)
-                                {
-                                    Trace.TraceError("Tried to get the transparency color, but CharBMP is not loaded. Defaulting to Black (0,0,0,255).");
-                                    break;
-                                }
+                                //if (CharBMP == IntPtr.Zero)
+                                //{
+                                //    Trace.TraceError("Tried to get the transparency color, but CharBMP is not loaded. Defaulting to Black (0,0,0,255).");
+                                //    break;
+                                //}
                                 // getting pixels via. SDL is hard
                                 // will do this later
                                 break;
@@ -352,20 +408,20 @@ namespace CHPEditor
                             default: // Remember that #00 and #01 are strictly reserved for Name Logo & character background respectively
                                 if (RectCollection == null)
                                 {
-                                    RectCollection = new SDL.SDL_Rect[Data * Data];
+                                    RectCollection = new Rectangle<int>[Data * Data];
                                     for (int i = 0; i < RectCollection.Length; i++)
-                                        RectCollection[i] = new SDL.SDL_Rect() { x = 0, y = 0, w = 0, h = 0 };
+                                        RectCollection[i] = new Rectangle<int>(0,0,0,0);
                                 }
                                 if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number))
                                 {
                                     if (split.Length >= 2 && int.TryParse(split[1], out int x))
-                                        RectCollection[number].x = x;
+                                        RectCollection[number].Origin.X = x;
                                     if (split.Length >= 3 && int.TryParse(split[2], out int y))
-                                        RectCollection[number].y = y;
+                                        RectCollection[number].Origin.Y = y;
                                     if (split.Length >= 4 && int.TryParse(split[3], out int w))
-                                        RectCollection[number].w = w;
+                                        RectCollection[number].Size.X = w;
                                     if (split.Length >= 5 && int.TryParse(split[4], out int h))
-                                        RectCollection[number].h = h;
+                                        RectCollection[number].Size.Y = h;
                                 }
                                 break;
                         }
@@ -383,31 +439,41 @@ namespace CHPEditor
             }
         }
         /// <param name="useColorKey">Write 0 to not use color keying, write 1 to manually set the color key, write 2 to automatically set the color key (uses bottom-right pixel of provided image)</param>
-        private static void LoadTexture(ref IntPtr renderer, ref IntPtr texture, string filename, int useColorKey = 2, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
+        private static unsafe void LoadTexture(ref BitmapData data, string filepath, int useColorKey = 2, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
         {
-            IntPtr texptr = SDL_image.IMG_Load(filename);
+            data.Path = filepath;
+            data.UseColorKey = useColorKey > 0;
 
-            SDL.SDL_Surface texsurface = Marshal.PtrToStructure<SDL.SDL_Surface>(texptr);
-
-            if (useColorKey >= 2)
+            if (useColorKey == 2 && data.Image != null)
             {
-                SDL.SDL_PixelFormat texformat = Marshal.PtrToStructure<SDL.SDL_PixelFormat>(texsurface.format);
-                SDL.SDL_Color color = GetPixel(texsurface, texformat, texsurface.w - 1, texsurface.h - 1);
-                SDL.SDL_SetColorKey(texptr, 1, SDL.SDL_MapRGBA(texsurface.format, color.r, color.g, color.b, color.a));
+                int offset = ((data.Image.Width * data.Image.Height) - 1) * 4;
+                data.ColorKey = Color.FromArgb(data.Image.Data[offset + 3], data.Image.Data[offset], data.Image.Data[offset + 1], data.Image.Data[offset + 2]);
             }
-            else if (useColorKey == 1)
-                SDL.SDL_SetColorKey(texptr, 1, SDL.SDL_MapRGBA(texsurface.format, r, g, b, a));
+            else if (useColorKey == 1 && data.Image != null)
+            {
+                data.ColorKey = Color.FromArgb(a,r,g,b);
+            }
+            else
+            {
+                data.ColorKey = Color.FromArgb(0x00,0x00,0x00,0x00);
+            }
 
-            texture = SDL.SDL_CreateTextureFromSurface(renderer, texptr);
+            data.Pointer = _gl.GenTexture();
+            _gl.ActiveTexture(TextureUnit.Texture0);
+            _gl.BindTexture(TextureTarget.Texture2D, data.Pointer);
 
-            SDL.SDL_FreeSurface(texptr);
-        }
-        private static unsafe SDL.SDL_Color GetPixel(SDL.SDL_Surface surface, SDL.SDL_PixelFormat format, int x, int y)
-        {
-            uint pixel = *(UInt32*)((byte*)surface.pixels + y * surface.pitch + x * format.BytesPerPixel);
-            SDL.SDL_Color color = new();
-            SDL.SDL_GetRGBA(pixel, surface.format, out color.r, out color.g, out color.b, out color.a);
-            return color;
+            if (data.Image != null)
+            {
+                fixed (byte* ptr = data.Image.Data)
+                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)data.Image.Width, (uint)data.Image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+
+                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)TextureWrapMode.Repeat);
+                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)TextureWrapMode.Repeat);
+                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+                _gl.BindTexture(TextureTarget.Texture2D, 0);
+            }
         }
 
         #region Dispose
@@ -416,14 +482,6 @@ namespace CHPEditor
         {
             if (!isDisposed)
             {
-                SDL.SDL_DestroyTexture(CharBMP);
-                SDL.SDL_DestroyTexture(CharBMP2P);
-                SDL.SDL_DestroyTexture(CharFace);
-                SDL.SDL_DestroyTexture(CharFace2P);
-                SDL.SDL_DestroyTexture(CharTex);
-                SDL.SDL_DestroyTexture(CharTex2P);
-                SDL.SDL_DestroyTexture(SelectCG);
-                SDL.SDL_DestroyTexture(SelectCG2P);
                 isDisposed = true;
             }
         }

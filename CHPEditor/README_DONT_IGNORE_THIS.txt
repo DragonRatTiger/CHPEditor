@@ -1,18 +1,18 @@
-(CHPEditor Version 0.1)
+ï»¿(CHPEditor Version 0.1.1)
 
 A file opener & manager does not yet exist.
 In addition, this version does not actually let you edit these files yet.
 The only aspect that works right now is the previewer.
-Being able to actually edit Pomyu Charas will take a while for me to implement, as this is a personal project to help me better understand how to create applications.
+Being able to actually edit Pomyu Charas will take a while for me to implement. Thank you for your patience.
 
 To load your Pomyu Chara, go into your folder where the EXE is located & add a folder named "chara" (case-sensitive).
 Copy your single Pomyu Chara & its assets into that folder, and rename the CHP file "chara.chp" (also case-sensitive).
 
-y‹@ŠB–|–óz
-ƒtƒ@ƒCƒ‹ƒI[ƒvƒi[‚Æƒ}ƒl[ƒWƒƒ[‚Í‚Ü‚¾‘¶İ‚µ‚Ü‚¹‚ñB
-‚³‚ç‚ÉA‚±‚Ìƒo[ƒWƒ‡ƒ“‚Å‚ÍÀÛ‚É‚Í‚±‚ê‚ç‚Ìƒtƒ@ƒCƒ‹‚ğ‚Ü‚¾•ÒW‚Å‚«‚Ü‚¹‚ñB
-Œ»“_‚Å‹@”\‚·‚é—Bˆê‚Ì‹@”\‚ÍƒvƒŒƒrƒ…[ƒA‚Å‚·B
-‚±‚ê‚ÍƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ìì¬•û–@‚ğ‚æ‚è[‚­—‰ğ‚·‚é‚½‚ß‚ÌŒÂl“I‚ÈƒvƒƒWƒFƒNƒg‚È‚Ì‚ÅAÀÛ‚É‚Û‚İ‚ãƒLƒƒƒ‰‚ğ•ÒW‚Å‚«‚é‚æ‚¤‚É‚È‚é‚Ü‚Å‚É‚Í‚µ‚Î‚ç‚­ŠÔ‚ª‚©‚©‚è‚Ü‚·B
+ã€æ©Ÿæ¢°ç¿»è¨³ã€‘
+ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒŠãƒ¼ã¨ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã¯ã¾ã å­˜åœ¨ã—ã¾ã›ã‚“ã€‚
+ã•ã‚‰ã«ã€ã“ã®ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã§ã¯å®Ÿéš›ã«ã¯ã“ã‚Œã‚‰ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã¾ã ç·¨é›†ã§ãã¾ã›ã‚“ã€‚
+ç¾æ™‚ç‚¹ã§æ©Ÿèƒ½ã™ã‚‹å”¯ä¸€ã®æ©Ÿèƒ½ã¯ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã§ã™ã€‚
+å®Ÿéš›ã«ã½ã¿ã‚…ã‚­ãƒ£ãƒ©ã‚’ç·¨é›†ã§ãã‚‹ã‚ˆã†ã«ãªã‚‹ã¾ã§ã«ã¯ã—ã°ã‚‰ãæ™‚é–“ãŒã‹ã‹ã‚Šã¾ã™ã€‚ ãŠå¾…ã¡ã„ãŸã ã„ã¦ã‚ã‚ŠãŒã¨ã†ã”ã–ã„ã¾ã™ã€‚
 
-‚Û‚İ‚ãƒLƒƒƒ‰‚ğƒ[ƒh‚·‚é‚É‚ÍAEXE ‚ª‘¶İ‚·‚éƒtƒHƒ‹ƒ_[‚ÉˆÚ“®‚µAucharav‚Æ‚¢‚¤–¼‘O‚ÌƒtƒHƒ‹ƒ_[‚ğ’Ç‰Á‚µ‚Ü‚· (‘å•¶š‚Æ¬•¶š‚Í‹æ•Ê‚³‚ê‚Ü‚·)B
-’Pˆê‚Ì‚Û‚İ‚ãƒLƒƒƒ‰‚Æ‚»‚ÌƒAƒZƒbƒg‚ğ‚»‚ÌƒtƒHƒ‹ƒ_[‚ÉƒRƒs[‚µACHP ƒtƒ@ƒCƒ‹‚Ì–¼‘O‚ğuchara.chpv‚É•ÏX‚µ‚Ü‚· (‘å•¶š‚Æ¬•¶š‚Í‹æ•Ê‚³‚ê‚Ü‚·)B
+ã½ã¿ã‚…ã‚­ãƒ£ãƒ©ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã«ã¯ã€EXE ãŒå­˜åœ¨ã™ã‚‹ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã«ç§»å‹•ã—ã€ã€Œcharaã€ã¨ã„ã†åå‰ã®ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã‚’è¿½åŠ ã—ã¾ã™ (å¤§æ–‡å­—ã¨å°æ–‡å­—ã¯åŒºåˆ¥ã•ã‚Œã¾ã™)ã€‚
+å˜ä¸€ã®ã½ã¿ã‚…ã‚­ãƒ£ãƒ©ã¨ãã®ã‚¢ã‚»ãƒƒãƒˆã‚’ãã®ãƒ•ã‚©ãƒ«ãƒ€ãƒ¼ã«ã‚³ãƒ”ãƒ¼ã—ã€CHP ãƒ•ã‚¡ã‚¤ãƒ«ã®åå‰ã‚’ã€Œchara.chpã€ã«å¤‰æ›´ã—ã¾ã™ (å¤§æ–‡å­—ã¨å°æ–‡å­—ã¯åŒºåˆ¥ã•ã‚Œã¾ã™)ã€‚
