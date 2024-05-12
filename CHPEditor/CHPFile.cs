@@ -10,14 +10,32 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using StbImageSharp;
 
-using static CHPEditor.Program;
+using static CHPEditor.CHPEditor;
 
 namespace CHPEditor
 {
     internal class CHPFile : IDisposable
     {
+        public bool Success { get; private set; }
+        public string Error { get; private set; }
+
         public string FileName;
+        public string FilePath;
+        public string FolderPath
+        {
+            get
+            {
+                return Path.GetDirectoryName(FilePath);
+            }
+        }
         public Encoding FileEncoding { get; private set; }
+
+        public int Anime = 83;
+        public int[] Size = [167, 271];
+        public int Wait = 1;
+        public int Data = 16; // Required for hexadecimal conversion
+        public bool AutoColorSet = false;
+
         public struct AnimeData
         {
             public bool Loaded;
@@ -48,21 +66,15 @@ namespace CHPEditor
                         return new Vector2D<int>(1, 1);
                 }
             }
-            public string Path
+            public string Path;
+            public uint Pointer;
+            public bool IsBMPFile
             {
                 get
-                {
-                    return _path;
-                } 
-                set
-                {
-                    _path = value;
-                    if (File.Exists(_path))
-                        Image = ImageResult.FromMemory(File.ReadAllBytes(Path), ColorComponents.RedGreenBlueAlpha);
-                } 
+                {   
+                    return System.IO.Path.GetExtension(Path) == ".bmp";
+                }
             }
-            private string _path;
-            public uint Pointer;
         }
 
         public string CharName,
@@ -77,46 +89,21 @@ namespace CHPEditor
             CharTex,
             CharTex2P;
 
-        public int Anime = 83;
-        public int[] Size = new int[2] { 167, 271 };
-        public int Wait = 1;
-        public int Data = 16; // Required for hexadecimal conversion
-
         public Rectangle<int>[] RectCollection;
 
         public AnimeData[] AnimeCollection { get; protected set; }
         public InterpolateData[] InterpolateCollection { get; protected set; }
         public CHPFile(string filename)
         {
+            Success = false;
+            Error = "";
             try
             {
-                string filedata = File.ReadAllText(filename);
-                // TEST
-                using (var fs = File.OpenRead(filename))
-                {
-                    Ude.CharsetDetector cdet = new Ude.CharsetDetector();
-                    cdet.Feed(fs);
-                    cdet.DataEnd();
-                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                    if (cdet.Charset != null)
-                    {
-                        foreach (EncodingInfo encodinginfo in Encoding.GetEncodings())
-                        {
-                            if (string.Equals(encodinginfo.Name, cdet.Charset, StringComparison.InvariantCultureIgnoreCase))
-                                FileEncoding = encodinginfo.GetEncoding();
-                        }
-                        if (FileEncoding == null)
-                            FileEncoding = Encoding.GetEncoding(932);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Detection failed.");
-                        FileEncoding = Encoding.UTF8;
-                    }
-                }
-                // TEST
-                string folderpath = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar;
+                FileEncoding = HEncodingDetector.DetectEncoding(filename, Encoding.GetEncoding(932));
+
+                string filedata = File.ReadAllText(filename, FileEncoding);
                 FileName = Path.GetFileName(filename);
+                FilePath = filename;
 
                 AnimeCollection = new AnimeData[18];
                 InterpolateCollection = new InterpolateData[18];
@@ -131,129 +118,106 @@ namespace CHPEditor
                     {
                         // parsing time :)
                         string[] split = line.Split('\t', StringSplitOptions.RemoveEmptyEntries);
-                        if (line.IndexOf("\t") < 0)
-                            continue;
-                        switch (line.Substring(0, line.IndexOf("\t")))
+                        //if (line.IndexOf("\t") < 0)
+                            //continue;
+                        split = split.Where(str => !str.StartsWith("//")).ToArray();
+                        int line_end = line.IndexOf("\t") > 0 ? line.IndexOf("\t") : line.Length;
+                        switch (line.Substring(0, line_end).ToLower())
                         {
                             #region Chara name & artist
-                            case "#CharName":
+                            case "#charname":
                                 CharName = split[1];
                                 break;
 
-                            case "#Artist":
+                            case "#artist":
                                 Artist = split[1];
                                 break;
                             #endregion
                             #region Bitmaps
-                            case "#CharBMP":
-                                LoadTexture(ref CharBMP, folderpath + split[1]);
-                                //if (CharBMP == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharBMP. " + SDL.SDL_GetError().ToString());
+                            case "#charbmp":
+                                LoadTexture(ref CharBMP, split[1]);
                                 break;
 
-                            case "#CharBMP2P":
-                                LoadTexture(ref CharBMP2P, folderpath + split[1]);
-                                //if (CharBMP2P == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharBMP2P. " + SDL.SDL_GetError().ToString());
+                            case "#charbmp2p":
+                                LoadTexture(ref CharBMP2P, split[1]);
                                 break;
 
                             // Regarding CharFace's background, ColorSet is ignored, and always uses Black (0,0,0,255) as the transparency color.
                             // This is my assumption at least, as every single CharFace I've looked at uses a pure black background.
-                            case "#CharFace":
-                                LoadTexture(ref CharFace, folderpath + split[1], 1, 0, 0, 0);
-                                //if (CharFace == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharFace. " + SDL.SDL_GetError().ToString());
+                            case "#charface":
+                                LoadTexture(ref CharFace, split[1], 1, 0, 0, 0);
                                 break;
 
-                            case "#CharFace2P":
-                                LoadTexture(ref CharFace2P, folderpath + split[1], 1, 0, 0, 0);
-                                //if (CharFace2P == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharFace2P. " + SDL.SDL_GetError().ToString());
+                            case "#charface2p":
+                                LoadTexture(ref CharFace2P, split[1], 1, 0, 0, 0);
                                 break;
 
-                            case "#SelectCG":
+                            case "#selectcg":
                                 string cgfile = split[1];
                                 string cgfile2 = cgfile.Replace("1p", "2p");
 
-                                LoadTexture(ref SelectCG, folderpath + cgfile, 0);
-                                //if (SelectCG == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load SelectCG. " + SDL.SDL_GetError().ToString());
+                                LoadTexture(ref SelectCG, cgfile, 0);
 
                                 // 2P version of SelectCG. For some reason, #SelectCG2P does not exist on any CHP that I've seen, but the 2P icon is still loaded anyways.
                                 // This is my assumption of how it's loaded.
-                                if (File.Exists(folderpath + cgfile2) && cgfile2.Contains("1p"))
+                                if (File.Exists(CHPPathCombine(cgfile2)) && cgfile2.Contains("1p"))
                                 {
-                                    LoadTexture(ref SelectCG2P, folderpath + cgfile2, 0);
-                                    //if (SelectCG2P == IntPtr.Zero)
-                                    //    Trace.TraceError("Couldn't load SelectCG's 2P equivalent. " + SDL.SDL_GetError().ToString());
+                                    LoadTexture(ref SelectCG2P, cgfile2, 0);
                                 }
                                 else
                                     Trace.TraceWarning("SelectCG's 2P equivalent couldn't be found. If you don't have a 2P palette, or if you prefer to not use a 2P icon, you can ignore this message. Otherwise, you may want to check that your file is named correctly. (Try replacing \"1p\" with \"2p\")");
                                 
                                 break;
 
-                            case "#CharTex":
-                                LoadTexture(ref CharTex, folderpath + split[1]);
-                                //if (CharTex == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharTex. " + SDL.SDL_GetError().ToString());
+                            case "#chartex":
+                                LoadTexture(ref CharTex, split[1]);
                                 break;
 
-                            case "#CharTex2P":
-                                LoadTexture(ref CharTex2P, folderpath + split[1]);
-                                //if (CharTex2P == IntPtr.Zero)
-                                //    Trace.TraceError("Couldn't load CharTex2P. " + SDL.SDL_GetError().ToString());
+                            case "#chartex2p":
+                                LoadTexture(ref CharTex2P, split[1]);
                                 break;
                             #endregion
                             #region Chara parameters
-                            case "#AutoColorSet":
-                                // This should only run after #CharBMP has been loaded.
-                                //if (CharBMP == IntPtr.Zero)
-                                //{
-                                //    Trace.TraceError("Tried to get the transparency color, but CharBMP is not loaded. Defaulting to Black (0,0,0,255).");
-                                //    break;
-                                //}
-                                // getting pixels via. SDL is hard
-                                // will do this later
+                            case "#autocolorset":
+                                AutoColorSet = true;
                                 break;
 
-                            case "#Anime":
+                            case "#anime":
                                 if (!int.TryParse(split[1], out Anime))
                                     Trace.TraceError("Failed to parse Anime value. Did you write it correctly?");
                                 break;
 
-                            case "#Size":
+                            case "#size":
                                 if (!int.TryParse(split[1], out Size[0]) || !int.TryParse(split[2], out Size[1]))
                                     Trace.TraceError("Failed to parse Size value. Did you write it correctly?");
                                 break;
 
-                            case "#Wait":
+                            case "#wait":
                                 if (!int.TryParse(split[1], out Wait))
                                     Trace.TraceError("Failed to parse Wait value. Did you write it correctly?");
                                 break;
 
-                            case "#Data":
+                            case "#data":
                                 if (!int.TryParse(split[1], out Data))
                                     Trace.TraceError("Failed to parse Data value. Did you write it correctly?");
                                 break;
                             #endregion
                             #region Animation
-                            case "#Loop":
+                            case "#loop":
                                 int loop = int.Parse(split[1]) - 1;
 
                                 AnimeCollection[loop].Loop = int.Parse(split[2]);
                                 break;
 
-                            case "#Flame": // This is the correct command, it's just a misspelling that ended up being final.
-                            case "#Frame": // Optionally including this one just in case.
+                            case "#flame": // This is the correct command, it's just a misspelling that ended up being final.
+                            case "#frame": // Optionally including this one just in case.
                                 int flame = int.Parse(split[1]) - 1;
                                 AnimeCollection[flame].Frame = int.Parse(split[2]);
                                 break;
 
-                            case "#Patern": // This is also the correct command, but was once again misspelled.
-                            case "#Pattern": // Also optionally including this one.
+                            case "#patern": // This is also the correct command, but was once again misspelled.
+                            case "#pattern": // Also optionally including this one.
                                 int patern = int.Parse(split[1]) - 1;
-
-                                AnimeCollection[patern].Loaded = true;
 
                                 AnimeCollection[patern].Pattern = new int[split[2].Length / 2];
                                 for (int i = 0; i < AnimeCollection[patern].Pattern.Length; i++)
@@ -262,13 +226,12 @@ namespace CHPEditor
                                     else
                                         AnimeCollection[patern].Pattern[i] = -1; // Indicator of interpoling point
 
-                                AnimeCollection[patern].FrameCount = AnimeCollection[patern].Pattern.Length; // All layers must have an equal frame count.
+
+                                AnimeCollection[patern].Loaded = true;
                                 break;
 
-                            case "#Texture":
+                            case "#texture":
                                 int texture = int.Parse(split[1]) - 1;
-
-                                AnimeCollection[texture].Loaded = true;
 
                                 if (AnimeCollection[texture].Texture == null)
                                 {
@@ -285,13 +248,13 @@ namespace CHPEditor
                                     for (int j = 0; j < 4; j++)
                                         if (j + 2 < split.Length)
                                         {
-                                            if (int.TryParse(split[j+2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
+                                            if (int.TryParse(split[j + 2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
                                             {
                                                 AnimeCollection[texture].Texture.Last()[i][j] = result;
                                                 #region Interpolate
                                                 if (i + 1 < AnimeCollection[texture].Texture.Last().Length)
                                                 {
-                                                    if (!int.TryParse(split[j + 2].Substring((i+1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
+                                                    if (!int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
                                                     {
                                                         if (InterpolateCollection[texture].Texture.Last()[j] == null)
                                                         {
@@ -334,13 +297,12 @@ namespace CHPEditor
                                         }
 
                                 }
-                                AnimeCollection[texture].FrameCount = AnimeCollection[texture].Texture.Last().Length; // All layers must have an equal frame count.
+
+                                AnimeCollection[texture].Loaded = true;
                                 break;
 
-                            case "#Layer":
+                            case "#layer":
                                 int layer = int.Parse(split[1]) - 1;
-
-                                AnimeCollection[layer].Loaded = true;
 
                                 if (AnimeCollection[layer].Layer == null)
                                 {
@@ -386,7 +348,6 @@ namespace CHPEditor
                                             }
                                             #endregion
                                         }
-
                                         else
                                         { 
                                             AnimeCollection[layer].Layer.Last()[i][j] = -1; // Indicator of interpoling point
@@ -402,7 +363,8 @@ namespace CHPEditor
                                             #endregion
                                         }
                                 }
-                                AnimeCollection[layer].FrameCount = AnimeCollection[layer].Layer.Last().Length; // All layers must have an equal frame count.
+
+                                AnimeCollection[layer].Loaded = true;
                                 break;
                             #endregion
                             default: // Remember that #00 and #01 are strictly reserved for Name Logo & character background respectively
@@ -427,21 +389,57 @@ namespace CHPEditor
                         }
                     }
                 }
+                for (int i = 0; i < AnimeCollection.Length; i++)
+                {
+                    List<int> all_lengths = new List<int>();
 
+                    if (AnimeCollection[i].Pattern != null)
+                    {
+                        all_lengths.Add(AnimeCollection[i].Pattern.Length);
+                    }
+                    if (AnimeCollection[i].Texture != null)
+                    {
+                        foreach (int[][] tex in AnimeCollection[i].Texture)
+                        {
+                            all_lengths.Add(tex.Length);
+                        }
+                    }
+                    if (AnimeCollection[i].Layer != null)
+                    {
+                        foreach (int[][] layer in AnimeCollection[i].Layer)
+                        {
+                            all_lengths.Add(layer.Length);
+                        }
+                    }
+
+                    AnimeCollection[i].FrameCount = all_lengths.Count > 0 ? all_lengths.Min() : 0;
+
+                    if (all_lengths.Distinct().Count() > 1)
+                        Trace.TraceWarning("State #" + (i+1) + " contains differing amounts of frames.\n" +
+                            "This may break applications that try to display Pomyu Charas.\n" +
+                            "Only the minimum amount of frames (" + all_lengths.Min() + ") will be displayed here.\n" +
+                            "Frame Counts: " + (string.Join(",", all_lengths.Select(len => len.ToString()).ToArray())));
+                }
+                Success = true;
             }
             catch (FileNotFoundException e)
             {
-                Trace.TraceError("Couldn't find the requested file. More details:" + Environment.NewLine + e);
+                string err = "Couldn't find the requested file. More details:" + Environment.NewLine + e;
+                Trace.TraceError(err);
+                Error = err;
             }
             catch (Exception e)
             {
-                Trace.TraceError("Something went wrong while trying to read the requested CHP file. More details:" + Environment.NewLine + e);
+                string err = "Something went wrong while trying to read the requested CHP file. More details:" + Environment.NewLine + e;
+                Trace.TraceError(err);
+                Error = err;
             }
         }
         /// <param name="useColorKey">Write 0 to not use color keying, write 1 to manually set the color key, write 2 to automatically set the color key (uses bottom-right pixel of provided image)</param>
-        private static unsafe void LoadTexture(ref BitmapData data, string filepath, int useColorKey = 2, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
+        private unsafe void LoadTexture(ref BitmapData data, string filepath, int useColorKey = 2, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
         {
             data.Path = filepath;
+            data.Image = ImageResult.FromMemory(File.ReadAllBytes(CHPPathCombine(filepath)), ColorComponents.RedGreenBlueAlpha);
             data.UseColorKey = useColorKey > 0;
 
             if (useColorKey == 2 && data.Image != null)
@@ -464,16 +462,21 @@ namespace CHPEditor
 
             if (data.Image != null)
             {
-                fixed (byte* ptr = data.Image.Data)
-                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)data.Image.Width, (uint)data.Image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
-
                 _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)TextureWrapMode.Repeat);
                 _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)TextureWrapMode.Repeat);
                 _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)TextureMinFilter.Nearest);
                 _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
+                fixed (byte* ptr = data.Image.Data)
+                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)data.Image.Width, (uint)data.Image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+
                 _gl.BindTexture(TextureTarget.Texture2D, 0);
             }
+        }
+
+        private string CHPPathCombine(string path)
+        {
+            return Path.Combine(FolderPath, path);
         }
 
         #region Dispose
@@ -482,6 +485,21 @@ namespace CHPEditor
         {
             if (!isDisposed)
             {
+                _gl.BindTexture(GLEnum.Texture2D, 0);
+
+                _gl.DeleteTextures(new uint[] 
+                { 
+                    CharBMP.Pointer,
+                    CharBMP2P.Pointer,
+                    CharFace.Pointer,
+                    CharFace2P.Pointer,
+                    SelectCG.Pointer,
+                    SelectCG2P.Pointer,
+                    CharTex.Pointer,
+                    CharTex2P.Pointer
+                }
+                );
+
                 isDisposed = true;
             }
         }

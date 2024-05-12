@@ -1,1 +1,1 @@
-dotnet publish CHPEditor/CHPEditor.csproj --configuration Release --self-contained -p:PublishSingleFile=True -p:PublishTrimmed=True -p:TrimMode=CopyUsed --runtime win-x64
+dotnet publish CHPEditor/CHPEditor.csproj --configuration Release --self-contained -p:PublishSingleFile=True --runtime win-x64

@@ -1,0 +1,61 @@
+﻿{
+  "Language": "English",
+  "InvalidEntry": "INVALID DICTIONARY KEY: {0}",
+
+  "Entries": {
+    "WINDOW_PREVIEW_SELECTOR_TITLE": "Selector",
+    "WINDOW_CHP_INFO_TITLE": "Information",
+
+    "TAB_BITMAPS": "Bitmaps",
+    "TAB_ANIMATIONS": "Animations",
+
+    "ANIMATIONS_PAUSE_PROMPT": "Pause Animation",
+    "ANIMATIONS_USE2P_PROMPT": "Use 2P Palette",
+
+    "CHP_RELOAD_PROMPT": "Reload File",
+    "CHP_FILE_LOAD_FAIL": "CHP file could not be loaded.",
+    "CHP_FILE_INFO": "{0} (File Encoding: {1})",
+
+    "CHP_BMP_PATH": "Path: {0}",
+    "CHP_BMP_SIZE": "Size: {0},{1}",
+    "CHP_BMP_COLORKEY": "ColorKey: {0},{1},{2},{3}",
+    "CHP_BMP_PATH_NONE": "None",
+
+    "CHP_CHARA_NAME": "Name: {0}",
+    "CHP_CHARA_ARTIST": "Artist: {0}",
+    "CHP_CHARA_TIMELINE": "Timeline: {0}/{1} ({2}s/{3}s)",
+    "CHP_CHARA_FPS": "FPS: {0} ({1}ms/frame)",
+    "CHP_CHARA_LOOP": "Loop Index: {0}",
+    "CHP_CHARA_PATTERN_ACTIVE": "Pattern is Active",
+    "CHP_CHARA_TEXTURE_ACTIVE": "Total Textures Used: {0}",
+    "CHP_CHARA_LAYER_ACTIVE": "Total Layers Used: {0}",
+    "CHP_CHARA_ANIMATION_NONE": "No Animation Available",
+
+    "CHP_CHARA_LOOP_PROMPT": "Show Loop Only",
+    "CHP_CHARA_HIDE_BG_PROMPT": "Hide Background & Name",
+    "CHP_CHARA_HIDE_PATTERN_PROMPT": "Hide Pattern",
+    "CHP_CHARA_HIDE_TEXTURE_PROMPT": "Hide Texture Count",
+    "CHP_CHARA_HIDE_LAYER_PROMPT": "Hide Layer Count",
+
+    "STATE_INDEXED": "State {0}",
+    "STATE_FULL_INDEXED": "State {0} ({1})",
+    "STATE1_TITLE": "Neutral",
+    "STATE2_TITLE": "Second - Legacy",
+    "STATE3_TITLE": "Ojama",
+    "STATE4_TITLE": "Miss",
+    "STATE5_TITLE": "Standing",
+    "STATE6_TITLE": "Fever",
+    "STATE7_TITLE": "Great",
+    "STATE8_TITLE": "Good",
+    "STATE9_TITLE": "Great - Opponent Miss - Rival",
+    "STATE10_TITLE": "Bad - Player hits Fever",
+    "STATE11_TITLE": "Bad - Player hits Great",
+    "STATE12_TITLE": "Bad - Player hits Good",
+    "STATE13_TITLE": "Unknown? - Need Clarification",
+    "STATE14_TITLE": "Dance",
+    "STATE15_TITLE": "Win",
+    "STATE16_TITLE": "Lose",
+    "STATE17_TITLE": "Fever Win",
+    "STATE18_TITLE": "Disturbed - Attacked by Ojama"
+  }
+}

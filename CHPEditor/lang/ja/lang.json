@@ -1,0 +1,60 @@
+﻿{
+  "Language": "日本語",
+  "InvalidEntry": "INVALID DICTIONARY KEY: {0}",
+  "Entries": {
+    "WINDOW_PREVIEW_SELECTOR_TITLE": "Selector",
+    "WINDOW_CHP_INFO_TITLE": "Information",
+
+    "TAB_BITMAPS": "Bitmaps",
+    "TAB_ANIMATIONS": "Animations",
+
+    "ANIMATIONS_PAUSE_PROMPT": "Pause Animation",
+    "ANIMATIONS_USE2P_PROMPT": "Use 2P Palette",
+
+    "CHP_RELOAD_PROMPT": "Reload File",
+    "CHP_FILE_LOAD_FAIL": "CHP file could not be loaded.",
+    "CHP_FILE_INFO": "{0} (File Encoding: {1})",
+
+    "CHP_BMP_PATH": "Path: {0}",
+    "CHP_BMP_SIZE": "サイズ: {0},{1}",
+    "CHP_BMP_COLORKEY": "ColorKey: R{0},G{1},B{2},A{3}",
+    "CHP_BMP_PATH_NONE": "None",
+
+    "CHP_CHARA_NAME": "キャラの名前: {0}",
+    "CHP_CHARA_ARTIST": "制作者名: {0}",
+    "CHP_CHARA_TIMELINE": "Timeline: {0}/{1} ({2}s/{3}s)",
+    "CHP_CHARA_FPS": "FPS: {0} ({1}ms/フレーム)",
+    "CHP_CHARA_LOOP": "ループ Index: {0}",
+    "CHP_CHARA_PATTERN_ACTIVE": "Pattern is Active",
+    "CHP_CHARA_TEXTURE_ACTIVE": "Total Textures Used: {0}",
+    "CHP_CHARA_LAYER_ACTIVE": "Total Layers Used: {0}",
+    "CHP_CHARA_ANIMATION_NONE": "No Animation Available",
+
+    "CHP_CHARA_LOOP_PROMPT": "Show Loop Only",
+    "CHP_CHARA_HIDE_BG_PROMPT": "Hide Background & Name",
+    "CHP_CHARA_HIDE_PATTERN_PROMPT": "Hide Pattern",
+    "CHP_CHARA_HIDE_TEXTURE_PROMPT": "Hide Texture Count",
+    "CHP_CHARA_HIDE_LAYER_PROMPT": "Hide Layer Count",
+
+    "STATE_INDEXED": "モーション {0}",
+    "STATE_FULL_INDEXED": "モーション {0} ({1})",
+    "STATE1_TITLE": "通常1",
+    "STATE2_TITLE": "通常2",
+    "STATE3_TITLE": "おじゃま",
+    "STATE4_TITLE": "ミス",
+    "STATE5_TITLE": "立ち",
+    "STATE6_TITLE": "喜び1",
+    "STATE7_TITLE": "喜び2",
+    "STATE8_TITLE": "喜び3",
+    "STATE9_TITLE": "喜び4 (相手のミス)",
+    "STATE10_TITLE": "ダメージ1 (相手FEVER)",
+    "STATE11_TITLE": "ダメージ2 (相手GREAT)",
+    "STATE12_TITLE": "ダメージ3 (相手GOOD)",
+    "STATE13_TITLE": "未知?",
+    "STATE14_TITLE": "ダンス",
+    "STATE15_TITLE": "勝ち",
+    "STATE16_TITLE": "負け",
+    "STATE17_TITLE": "完全勝利",
+    "STATE18_TITLE": "邪魔され中"
+  }
+}
