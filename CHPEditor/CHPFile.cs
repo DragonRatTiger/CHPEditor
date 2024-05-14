@@ -7,16 +7,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
-using StbImageSharp;
-
-using static CHPEditor.CHPEditor;
 
 namespace CHPEditor
 {
     internal class CHPFile : IDisposable
     {
-        public bool Success { get; private set; }
+        public enum ColorKeyType
+        {
+            None = 0,
+            Manual = 1,
+            Auto = 2
+        }
+        public bool Loaded { get; private set; }
         public string Error { get; private set; }
 
         public string FileName;
@@ -53,26 +55,34 @@ namespace CHPEditor
         }
         public struct BitmapData
         {
-            public ImageResult Image;
-            public bool UseColorKey;
+            public string Path;
+            public ImageFileManager? ImageFile;
+            public ColorKeyType ColorKeyType;
             public Color ColorKey;
             public Vector2D<int> Bounds
             { 
                 get
                 {
-                    if (Image != null)
-                        return new Vector2D<int>(Image.Width, Image.Height);
+                    if (Loaded)
+                        return new Vector2D<int>(ImageFile.Image.Width, ImageFile.Image.Height);
                     else
-                        return new Vector2D<int>(1, 1);
+                        return new Vector2D<int>(0, 0);
                 }
             }
-            public string Path;
-            public uint Pointer;
             public bool IsBMPFile
             {
                 get
                 {   
                     return System.IO.Path.GetExtension(Path) == ".bmp";
+                }
+            }
+            public bool Loaded
+            {
+                get
+                {
+                    if (ImageFile == null)
+                        return false;
+                    return ImageFile.Loaded;
                 }
             }
         }
@@ -95,8 +105,9 @@ namespace CHPEditor
         public InterpolateData[] InterpolateCollection { get; protected set; }
         public CHPFile(string filename)
         {
-            Success = false;
+            Loaded = false;
             Error = "";
+
             try
             {
                 FileEncoding = HEncodingDetector.DetectEncoding(filename, Encoding.GetEncoding(932));
@@ -145,11 +156,11 @@ namespace CHPEditor
                             // Regarding CharFace's background, ColorSet is ignored, and always uses Black (0,0,0,255) as the transparency color.
                             // This is my assumption at least, as every single CharFace I've looked at uses a pure black background.
                             case "#charface":
-                                LoadTexture(ref CharFace, split[1], 1, 0, 0, 0);
+                                LoadTexture(ref CharFace, split[1], ColorKeyType.Manual, 0, 0, 0);
                                 break;
 
                             case "#charface2p":
-                                LoadTexture(ref CharFace2P, split[1], 1, 0, 0, 0);
+                                LoadTexture(ref CharFace2P, split[1], ColorKeyType.Manual, 0, 0, 0);
                                 break;
 
                             case "#selectcg":
@@ -160,7 +171,7 @@ namespace CHPEditor
 
                                 // 2P version of SelectCG. For some reason, #SelectCG2P does not exist on any CHP that I've seen, but the 2P icon is still loaded anyways.
                                 // This is my assumption of how it's loaded.
-                                if (File.Exists(CHPPathCombine(cgfile2)) && cgfile2.Contains("1p"))
+                                if (File.Exists(GetPath(cgfile2)) && cgfile2.Contains("2p"))
                                 {
                                     LoadTexture(ref SelectCG2P, cgfile2, 0);
                                 }
@@ -420,7 +431,7 @@ namespace CHPEditor
                             "Only the minimum amount of frames (" + all_lengths.Min() + ") will be displayed here.\n" +
                             "Frame Counts: " + (string.Join(",", all_lengths.Select(len => len.ToString()).ToArray())));
                 }
-                Success = true;
+                Loaded = true;
             }
             catch (FileNotFoundException e)
             {
@@ -435,19 +446,19 @@ namespace CHPEditor
                 Error = err;
             }
         }
-        /// <param name="useColorKey">Write 0 to not use color keying, write 1 to manually set the color key, write 2 to automatically set the color key (uses bottom-right pixel of provided image)</param>
-        private unsafe void LoadTexture(ref BitmapData data, string filepath, int useColorKey = 2, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
+        
+        private unsafe void LoadTexture(ref BitmapData data, string filepath, ColorKeyType colorKey = ColorKeyType.Auto, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
         {
             data.Path = filepath;
-            data.Image = ImageResult.FromMemory(File.ReadAllBytes(CHPPathCombine(filepath)), ColorComponents.RedGreenBlueAlpha);
-            data.UseColorKey = useColorKey > 0;
+            data.ImageFile = new ImageFileManager(GetPath(data.Path), true);
+            data.ColorKeyType = colorKey;
 
-            if (useColorKey == 2 && data.Image != null)
+            if (colorKey == ColorKeyType.Auto && data.ImageFile.Image != null)
             {
-                int offset = ((data.Image.Width * data.Image.Height) - 1) * 4;
-                data.ColorKey = Color.FromArgb(data.Image.Data[offset + 3], data.Image.Data[offset], data.Image.Data[offset + 1], data.Image.Data[offset + 2]);
+                int offset = ((data.ImageFile.Image.Width * data.ImageFile.Image.Height) - 1) * 4;
+                data.ColorKey = Color.FromArgb(data.ImageFile.Image.Data[offset + 3], data.ImageFile.Image.Data[offset], data.ImageFile.Image.Data[offset + 1], data.ImageFile.Image.Data[offset + 2]);
             }
-            else if (useColorKey == 1 && data.Image != null)
+            else if (colorKey == ColorKeyType.Manual && data.ImageFile.Image != null)
             {
                 data.ColorKey = Color.FromArgb(a,r,g,b);
             }
@@ -455,26 +466,9 @@ namespace CHPEditor
             {
                 data.ColorKey = Color.FromArgb(0x00,0x00,0x00,0x00);
             }
-
-            data.Pointer = _gl.GenTexture();
-            _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, data.Pointer);
-
-            if (data.Image != null)
-            {
-                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)TextureWrapMode.Repeat);
-                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)TextureWrapMode.Repeat);
-                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)TextureMinFilter.Nearest);
-                _gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)TextureMagFilter.Nearest);
-
-                fixed (byte* ptr = data.Image.Data)
-                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)data.Image.Width, (uint)data.Image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
-
-                _gl.BindTexture(TextureTarget.Texture2D, 0);
-            }
         }
 
-        private string CHPPathCombine(string path)
+        private string GetPath(string path)
         {
             return Path.Combine(FolderPath, path);
         }
@@ -485,20 +479,30 @@ namespace CHPEditor
         {
             if (!isDisposed)
             {
-                _gl.BindTexture(GLEnum.Texture2D, 0);
+                if (disposing)
+                {
+                    Loaded = false;
+                    Error = "";
 
-                _gl.DeleteTextures(new uint[] 
-                { 
-                    CharBMP.Pointer,
-                    CharBMP2P.Pointer,
-                    CharFace.Pointer,
-                    CharFace2P.Pointer,
-                    SelectCG.Pointer,
-                    SelectCG2P.Pointer,
-                    CharTex.Pointer,
-                    CharTex2P.Pointer
+                    FileName = "";
+                    FilePath = "";
+                    FileEncoding = null;
+                    CharName = "";
+                    Artist = "";
+                    CharFile = "";
+                    RectCollection = [];
+                    AnimeCollection = [];
+                    InterpolateCollection = [];
                 }
-                );
+
+                CharBMP.ImageFile?.Dispose();
+                CharBMP2P.ImageFile?.Dispose();
+                CharFace.ImageFile?.Dispose();
+                CharFace2P.ImageFile?.Dispose();
+                SelectCG.ImageFile?.Dispose();
+                SelectCG2P.ImageFile?.Dispose();
+                CharTex.ImageFile?.Dispose();
+                CharTex2P.ImageFile?.Dispose();
 
                 isDisposed = true;
             }

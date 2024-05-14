@@ -34,7 +34,7 @@ namespace CHPEditor
                 }
                 else
                 {
-                    Trace.TraceWarning("File encoding for " + Path.GetFileName(stream.Name) + " could not be found. Defaulting to " + fallback_encoding.EncodingName + ".");
+                    Trace.TraceWarning("File encoding for " + Path.GetFileName(stream.Name) + " could not be found. Defaulting to " + fallback_encoding.WebName + ".");
                 }
             }
 

@@ -1,6 +1,22 @@
 ﻿{
-  "Language": "日本語",
+  "Language": "日本語 (Japanese)",
   "InvalidEntry": "INVALID DICTIONARY KEY: {0}",
+
+  "DefaultFont": "font.ttf",
+  "DefaultFontSize": 16.0,
+  "Fonts": [
+    {
+      "Font": "font.ttf",
+      "Size": 16.0,
+      // Ranges of glyphs to use for your language. Only use what is necessary to avoid bloating memory with unused text.
+      // Available sets: 
+      // "japanese", "chinese_full", "chinese_simplified_common", "cyrillic", "greek", "korean", "thai", "vietnamese"
+      "GlyphSets": [ "japanese" ],
+      // Custom glyphs not found in the glyph sets above. Write bytes in string format (i.e. ["0xff00", "0xf000"])
+      "CustomGlyphs": []
+    }
+  ],
+
   "Entries": {
     "WINDOW_PREVIEW_SELECTOR_TITLE": "Selector",
     "WINDOW_CHP_INFO_TITLE": "Information",
@@ -11,6 +27,7 @@
     "ANIMATIONS_PAUSE_PROMPT": "Pause Animation",
     "ANIMATIONS_USE2P_PROMPT": "Use 2P Palette",
 
+    "CHP_PATH_PROMPT": "パス",
     "CHP_RELOAD_PROMPT": "Reload File",
     "CHP_FILE_LOAD_FAIL": "CHP file could not be loaded.",
     "CHP_FILE_INFO": "{0} (File Encoding: {1})",

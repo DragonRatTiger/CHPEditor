@@ -21,7 +21,6 @@ namespace CHPEditor
         public static uint _ebo { get; private set; }
         public static uint _program { get; private set; }
         public static ImGuiIOPtr _io;
-        public static uint imFontTex;
         public static LangManager lang;
         public static ConfigManager config;
 
@@ -31,6 +30,7 @@ namespace CHPEditor
         public static int key_loc { get; private set; }
 
         public static ImGuiController _controller { get; private set; }
+        public static ImageManager? _imguiFontAtlas;
 
         private static int bmpstate = 1;
         private static int bmpshow = 1;
@@ -69,12 +69,13 @@ namespace CHPEditor
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            InitLog(false);
             config = new ConfigManager("Config.ini");
             lang = new LangManager(config.Lang);
+            InitLog(config.LogFileIsTimestamped);
 
             WindowOptions options = WindowOptions.Default;
             options.Size = config.WindowSize;
+            options.Position = config.WindowPos;
             options.Title = window_title;
 
             _window = Window.Create(options);
@@ -90,6 +91,8 @@ namespace CHPEditor
 
         private static void Closing()
         {
+            config.WindowSize = _window.Size;
+            config.WindowPos = _window.Position;
             config.SaveConfig("Config.ini");
         }
 
@@ -311,7 +314,6 @@ void main()
         }
         static void Resize(Vector2D<int> size)
         {
-            config.WindowSize = size;
             _gl.Viewport(size);
         }
         static void KeyDown(IKeyboard keyboard, Key key, int value)
@@ -352,7 +354,7 @@ void main()
                     anitoggle = true;
 
                     ImGui.Checkbox(lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref pause);
-                    if (chpFile.CharBMP2P.Image != null)
+                    if (chpFile.CharBMP2P.Loaded)
                         ImGui.Checkbox(lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref use2P);
 
                     ImGui.Separator();
@@ -363,6 +365,7 @@ void main()
                         {
                             Trace.TraceInformation("Previewing " + text);
                             anishow = i;
+                            tick = 0;
                         }
                     }
                     ImGui.EndTabItem();
@@ -378,7 +381,7 @@ void main()
             ImGui.SetWindowPos(new System.Numerics.Vector2(300, 0), ImGuiCond.FirstUseEver);
             ImGui.SetWindowSize(new System.Numerics.Vector2(300, 300), ImGuiCond.FirstUseEver);
 
-            ImGui.InputTextWithHint("Path", Path.Combine("chara", "chara.chp"), ref config.Path, 64);
+            ImGui.InputTextWithHint(lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref config.Path, 64);
             if (ImGui.Button(lang.GetValue("CHP_RELOAD_PROMPT")))
             {
                 chpFile.Dispose();
@@ -391,7 +394,7 @@ void main()
             ImGui.Checkbox("DEBUG ONLY! Show ImGUI Demo Window", ref showDebug);
 #endif
             ImGui.Separator();
-            if (chpFile.Success)
+            if (chpFile.Loaded)
             {
                 ImGui.Text(lang.GetValue("CHP_FILE_INFO", chpFile.FileName, chpFile.FileEncoding.WebName));
 
@@ -408,7 +411,7 @@ void main()
                     switch (bmpstate)
                     {
                         case 1:
-                            if (chpFile.CharBMP.Image != null)
+                            if (chpFile.CharBMP.Loaded)
                             {
                                 bmpname = chpFile.CharBMP.Path;
                                 bmpsize = chpFile.CharBMP.Bounds;
@@ -416,7 +419,7 @@ void main()
                             }
                             break;
                         case 2:
-                            if (chpFile.CharBMP2P.Image != null)
+                            if (chpFile.CharBMP2P.Loaded)
                             {
                                 bmpname = chpFile.CharBMP2P.Path;
                                 bmpsize = chpFile.CharBMP2P.Bounds;
@@ -424,7 +427,7 @@ void main()
                             }
                             break;
                         case 3:
-                            if (chpFile.CharFace.Image != null)
+                            if (chpFile.CharFace.Loaded)
                             {
                                 bmpname = chpFile.CharFace.Path;
                                 bmpsize = chpFile.CharFace.Bounds;
@@ -432,7 +435,7 @@ void main()
                             }
                             break;
                         case 4:
-                            if (chpFile.CharFace2P.Image != null)
+                            if (chpFile.CharFace2P.Loaded)
                             {
                                 bmpname = chpFile.CharFace2P.Path;
                                 bmpsize = chpFile.CharFace2P.Bounds;
@@ -440,7 +443,7 @@ void main()
                             }
                             break;
                         case 5:
-                            if (chpFile.SelectCG.Image != null)
+                            if (chpFile.SelectCG.Loaded)
                             {
                                 bmpname = chpFile.SelectCG.Path;
                                 bmpsize = chpFile.SelectCG.Bounds;
@@ -448,7 +451,7 @@ void main()
                             }
                             break;
                         case 6:
-                            if (chpFile.SelectCG2P.Image != null)
+                            if (chpFile.SelectCG2P.Loaded)
                             {
                                 bmpname = chpFile.SelectCG2P.Path;
                                 bmpsize = chpFile.SelectCG2P.Bounds;
@@ -456,7 +459,7 @@ void main()
                             }
                             break;
                         case 7:
-                            if (chpFile.CharTex.Image != null)
+                            if (chpFile.CharTex.Loaded)
                             {
                                 bmpname = chpFile.CharTex.Path;
                                 bmpsize = chpFile.CharTex.Bounds;
@@ -464,7 +467,7 @@ void main()
                             }
                             break;
                         case 8:
-                            if (chpFile.CharTex2P.Image != null)
+                            if (chpFile.CharTex2P.Loaded)
                             {
                                 bmpname = chpFile.CharTex2P.Path;
                                 bmpsize = chpFile.CharTex2P.Bounds;
@@ -546,11 +549,11 @@ void main()
         // Texture Drawing
         static void RenderTex(CHPFile.BitmapData data)
         {
-            if (chpFile.Success)
+            if (chpFile.Loaded)
             {
                 if (bmpshow != bmpstate)
                 {
-                    if (data.Image == null)
+                    if (!data.Loaded)
                     {
                         Trace.TraceInformation("The texture selected is not loaded. Nothing will be displayed.");
                         bmpstate = bmpshow;
@@ -558,7 +561,7 @@ void main()
                     }
                     bmpstate = bmpshow;
                 }
-                if (data.Image != null)
+                if (data.Loaded)
                 {
                     Draw(
                         ref data, 
@@ -570,7 +573,7 @@ void main()
         }
         static void RenderAnimation(ref CHPFile chpfile)
         {
-            if (chpfile.Success)
+            if (chpfile.Loaded)
                 if (chpfile.AnimeCollection[anishow - 1].Loaded)
                 {
                     int state = anishow - 1;
@@ -616,7 +619,7 @@ void main()
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
                     {
-                        if (use2P && chpfile.CharBMP2P.Image != null)
+                        if (use2P && chpfile.CharBMP2P.Loaded)
                         {
                             Draw(
                                 ref chpfile.CharBMP2P,
@@ -648,7 +651,7 @@ void main()
                         patdst.Size.X = Math.Min(dst.Size.X, chpfile.RectCollection[data].Size.X);
                         patdst.Size.Y = Math.Min(dst.Size.Y, chpfile.RectCollection[data].Size.Y);
 
-                        if (use2P && chpfile.CharBMP2P.Image != null)
+                        if (use2P && chpfile.CharBMP2P.Loaded)
                             Draw(
                                 ref chpfile.CharBMP2P,
                                 chpfile.RectCollection[data],
@@ -717,8 +720,8 @@ void main()
                                 texdst = new Rectangle<int>(
                                     chpfile.RectCollection[dstdata].Origin.X + anchor_x,
                                     chpfile.RectCollection[dstdata].Origin.Y + anchor_y,
-                                    chpfile.RectCollection[srcdata].Size.X,
-                                    chpfile.RectCollection[srcdata].Size.Y );
+                                    chpfile.RectCollection[dstdata].Size.X,
+                                    chpfile.RectCollection[dstdata].Size.Y );
                             }
                             if (!isInterpole[2])
                             {
@@ -728,8 +731,10 @@ void main()
                             {
                                 rot = (texture[framecap][3] / 256.0) * 360.0;
                             }
+                            if (chpfile.RectCollection[srcdata].Size.X <= 0 || chpfile.RectCollection[srcdata].Size.X <= 0)
+                                texdst.Size = new Vector2D<int>(0, 0);
 
-                            if (use2P && chpfile.CharTex2P.Image != null)
+                            if (use2P && chpfile.CharTex2P.Loaded)
                             {
                                 Draw(
                                     ref chpfile.CharTex2P,
@@ -776,6 +781,7 @@ void main()
                                                 (int)(chpfile.RectCollection[inter[1][j][2]].Size.X + ((chpfile.RectCollection[inter[1][j][3]].Size.X - chpfile.RectCollection[inter[1][j][2]].Size.X) * progress)),
                                                 (int)(chpfile.RectCollection[inter[1][j][2]].Size.Y + ((chpfile.RectCollection[inter[1][j][3]].Size.Y - chpfile.RectCollection[inter[1][j][2]].Size.Y) * progress))
                                             );
+                                            isInterpole = true;
                                         }
                                     }
                                 }
@@ -789,39 +795,39 @@ void main()
 
                             int srcdata = layer[framecap][0];
 
+                            Rectangle<int> crop_amount = new Rectangle<int>()
+                            {
+                                Origin = new Vector2D<int>()
+                                {
+                                    X = laydst.Origin.X - Math.Clamp(laydst.Origin.X, dst.Origin.X, dst.Max.X),
+                                    Y = laydst.Origin.Y - Math.Clamp(laydst.Origin.Y, dst.Origin.Y, dst.Max.Y)
+                                },
+                                Size = new Vector2D<int>()
+                                {
+                                    X = laydst.Max.X - Math.Clamp(laydst.Max.X, dst.Origin.X, dst.Max.X),
+                                    Y = laydst.Max.Y - Math.Clamp(laydst.Max.Y, dst.Origin.Y, dst.Max.Y),
+                                }
+                            };
+
                             Rectangle<int> crop_rect = chpfile.RectCollection[srcdata];
                             Rectangle<int> crop_dst = laydst;
-                            // Layer can not cross its size boundaries, so anything extra must be cropped out
-                            if (laydst.Origin.X < dst.Origin.X)
-                            {
-                                crop_dst.Origin.X -= (laydst.Origin.X - dst.Origin.X);
-                                crop_rect.Origin.X -= (laydst.Origin.X - dst.Origin.X);
-                                crop_dst.Size.X += (laydst.Origin.X - dst.Origin.X);
-                                crop_rect.Size.X += (laydst.Origin.X - dst.Origin.X);
-                            }
-                            if (laydst.Origin.Y < dst.Origin.Y)
-                            {
-                                crop_dst.Origin.Y -= (laydst.Origin.Y - dst.Origin.Y);
-                                crop_rect.Origin.Y -= (laydst.Origin.Y - dst.Origin.Y);
-                                crop_dst.Size.Y += (laydst.Origin.Y - dst.Origin.Y);
-                                crop_rect.Size.Y += (laydst.Origin.Y - dst.Origin.Y);
-                            }
-                            if (laydst.Max.X > dst.Max.X)
-                            {
-                                crop_dst.Size.X -= (laydst.Max.X - dst.Max.X);
-                                crop_rect.Size.X -= (laydst.Max.X - dst.Max.X);
-                            }
-                            if (laydst.Max.Y > dst.Max.Y)
-                            {
-                                crop_dst.Size.Y -= (laydst.Max.Y - dst.Max.Y);
-                                crop_rect.Size.Y -= (laydst.Max.Y - dst.Max.Y);
-                            }
-                            crop_rect.Size.X = Math.Max(crop_rect.Size.X, 0);
-                            crop_rect.Size.Y = Math.Max(crop_rect.Size.Y, 0);
-                            crop_dst.Size.X = Math.Clamp(crop_dst.Size.X, 0, crop_rect.Size.X);
-                            //crop_dst.Size.Y = Math.Clamp(crop_dst.Size.Y, 0, crop_rect.Size.Y);
 
-                            if (use2P && chpfile.CharBMP2P.Image != null)
+                            // Layer can not cross its size boundaries, so anything extra must be cropped out
+                            crop_rect.Origin.X -= crop_amount.Origin.X;
+                            crop_rect.Origin.Y -= crop_amount.Origin.Y;
+                            crop_rect.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                            crop_rect.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                            crop_dst.Origin.X -= crop_amount.Origin.X;
+                            crop_dst.Origin.Y -= crop_amount.Origin.Y;
+                            crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                            crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                            // Quick fix
+                            if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
+                                crop_dst.Size = new Vector2D<int>(0, 0);
+
+                            if (use2P && chpfile.CharBMP2P.Loaded)
                                 Draw(
                                 ref chpfile.CharBMP2P,
                                 crop_rect,
@@ -868,7 +874,7 @@ void main()
             _gl.UseProgram(_program);
 
             _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, bitmap_data.Pointer);
+            _gl.BindTexture(TextureTarget.Texture2D, bitmap_data.ImageFile.Pointer);
 
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
 
@@ -912,10 +918,9 @@ void main()
 
             _gl.Uniform1(tex_loc, 0);
             _gl.Uniform1(alpha_loc, alpha);
-            if (chpFile.AutoColorSet)
+            if (chpFile.AutoColorSet && bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Auto ||
+                bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Manual)
                 _gl.Uniform4(key_loc, (float)bitmap_data.ColorKey.R / 255.0f, (float)bitmap_data.ColorKey.G / 255.0f, (float)bitmap_data.ColorKey.B / 255.0f, (float)bitmap_data.ColorKey.A / 255.0f);
-            else if (bitmap_data.UseColorKey)
-                _gl.Uniform4(key_loc, 0.0, 0.0, 0.0, 1.0);
             else
                 _gl.Uniform4(key_loc, 0.0, 0.0, 0.0, 0.0);
 
