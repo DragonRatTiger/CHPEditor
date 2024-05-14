@@ -43,8 +43,11 @@ namespace CHPEditor
             JsonNode node = JsonNode.Parse(langjson, nodeOptions, docOptions);
 
             Language = node["Language"].Deserialize<string>();
-            InvalidEntry = node["InvalidEntry"].Deserialize<string>();
             Entries = node["Entries"].Deserialize<Dictionary<string, string>>();
+            InvalidEntry = node["InvalidEntry"].Deserialize<string>();
+
+            DefaultFont = node["DefaultFont"].Deserialize<string>();
+            DefaultFontSize = node["DefaultFontSize"].Deserialize<float>();
 
             foreach (JsonObject arr in node["Fonts"].AsArray())
             {
@@ -61,7 +64,7 @@ namespace CHPEditor
             #region ImGUI Font Setup
             CHPEditor._io.Fonts.Clear();
 
-            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, "font.ttf"), 16, null, CHPEditor._io.Fonts.GetGlyphRangesDefault());
+            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, DefaultFont), DefaultFontSize, null, CHPEditor._io.Fonts.GetGlyphRangesDefault());
 
             ImFontConfigPtr config = new ImFontConfigPtr(ImGuiNative.ImFontConfig_ImFontConfig());
             config.MergeMode = true;
@@ -75,28 +78,28 @@ namespace CHPEditor
                     switch (glyph.ToLower())
                     {
                         case "japanese":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesJapanese());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesJapanese());
                             break;
                         case "chinese_full":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesChineseFull());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesChineseFull());
                             break;
                         case "chinese_simplified_common":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesChineseSimplifiedCommon());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesChineseSimplifiedCommon());
                             break;
                         case "cyrillic":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesCyrillic());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesCyrillic());
                             break;
                         case "greek":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesGreek());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesGreek());
                             break;
                         case "korean":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesKorean());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesKorean());
                             break;
                         case "thai":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesThai());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesThai());
                             break;
                         case "vietnamese":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, CHPEditor._io.Fonts.GetGlyphRangesVietnamese());
+                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesVietnamese());
                             break;
                     }
                 }
@@ -105,7 +108,7 @@ namespace CHPEditor
                 {
                     byte[] glyphs = font.Item4.Select(byte.Parse).ToArray();
                     fixed (byte* glyph_data = glyphs)
-                        CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), 16, config, (IntPtr)glyph_data);
+                        CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, (IntPtr)glyph_data);
                 }
             }
             #endregion
