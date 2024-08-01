@@ -453,12 +453,12 @@ namespace CHPEditor
             data.ImageFile = new ImageFileManager(GetPath(data.Path), true);
             data.ColorKeyType = colorKey;
 
-            if (colorKey == ColorKeyType.Auto && data.ImageFile.Image != null)
+            if (colorKey == ColorKeyType.Auto && data.ImageFile.Loaded)
             {
                 int offset = ((data.ImageFile.Image.Width * data.ImageFile.Image.Height) - 1) * 4;
                 data.ColorKey = Color.FromArgb(data.ImageFile.Image.Data[offset + 3], data.ImageFile.Image.Data[offset], data.ImageFile.Image.Data[offset + 1], data.ImageFile.Image.Data[offset + 2]);
             }
-            else if (colorKey == ColorKeyType.Manual && data.ImageFile.Image != null)
+            else if (colorKey == ColorKeyType.Manual && data.ImageFile.Loaded)
             {
                 data.ColorKey = Color.FromArgb(a,r,g,b);
             }

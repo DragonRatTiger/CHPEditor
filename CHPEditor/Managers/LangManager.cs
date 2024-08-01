@@ -45,7 +45,7 @@ namespace CHPEditor
             Language = node["Language"].Deserialize<string>();
             Entries = node["Entries"].Deserialize<Dictionary<string, string>>();
             InvalidEntry = node["InvalidEntry"].Deserialize<string>();
-
+            
             DefaultFont = node["DefaultFont"].Deserialize<string>();
             DefaultFontSize = node["DefaultFontSize"].Deserialize<float>();
 
@@ -62,9 +62,9 @@ namespace CHPEditor
         public unsafe void UseFont()
         {
             #region ImGUI Font Setup
-            CHPEditor._io.Fonts.Clear();
+            CHPEditor.IO.Fonts.Clear();
 
-            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, DefaultFont), DefaultFontSize, null, CHPEditor._io.Fonts.GetGlyphRangesDefault());
+            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, DefaultFont), DefaultFontSize, null, CHPEditor.IO.Fonts.GetGlyphRangesDefault());
 
             ImFontConfigPtr config = new ImFontConfigPtr(ImGuiNative.ImFontConfig_ImFontConfig());
             config.MergeMode = true;
@@ -78,28 +78,28 @@ namespace CHPEditor
                     switch (glyph.ToLower())
                     {
                         case "japanese":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesJapanese());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesJapanese());
                             break;
                         case "chinese_full":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesChineseFull());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseFull());
                             break;
                         case "chinese_simplified_common":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesChineseSimplifiedCommon());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseSimplifiedCommon());
                             break;
                         case "cyrillic":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesCyrillic());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesCyrillic());
                             break;
                         case "greek":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesGreek());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesGreek());
                             break;
                         case "korean":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesKorean());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesKorean());
                             break;
                         case "thai":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesThai());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesThai());
                             break;
                         case "vietnamese":
-                            CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor._io.Fonts.GetGlyphRangesVietnamese());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesVietnamese());
                             break;
                     }
                 }
@@ -108,12 +108,12 @@ namespace CHPEditor
                 {
                     byte[] glyphs = font.Item4.Select(byte.Parse).ToArray();
                     fixed (byte* glyph_data = glyphs)
-                        CHPEditor._io.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, (IntPtr)glyph_data);
+                        CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, (IntPtr)glyph_data);
                 }
             }
             #endregion
 
-            CHPEditor._io.Fonts.GetTexDataAsRGBA32(out byte* font_pixels, out int font_width, out int font_height);
+            CHPEditor.IO.Fonts.GetTexDataAsRGBA32(out byte* font_pixels, out int font_width, out int font_height);
 
             byte[] arr = new byte[font_width * font_height * 4];
             Marshal.Copy((IntPtr)font_pixels, arr, 0, arr.Length);
@@ -121,23 +121,17 @@ namespace CHPEditor
             CHPEditor._imguiFontAtlas?.Dispose();
             CHPEditor._imguiFontAtlas = new ImageManager(arr, font_width, font_height);
 
-            CHPEditor._io.Fonts.SetTexID((nint)CHPEditor._imguiFontAtlas.Pointer);
+            CHPEditor.IO.Fonts.SetTexID((nint)CHPEditor._imguiFontAtlas.Pointer);
 
             #endregion
         }
         public string GetValue(string key)
         {
-            if (Entries.TryGetValue(key, out string value))
-                return value;
-            else
-                return string.Format(InvalidEntry, key);
+            return Entries.TryGetValue(key, out string value) ? value : string.Format(InvalidEntry, key);
         }
         public string GetValue(string key, params object?[] args)
         {
-            if (Entries.TryGetValue(key, out string value))
-                return string.Format(value, args);
-            else
-                return string.Format(InvalidEntry, key);
+            return Entries.TryGetValue(key, out string value) ? string.Format(value, args) : string.Format(InvalidEntry, key);
         }
     }
 }

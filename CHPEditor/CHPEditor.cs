@@ -9,6 +9,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using System.Text;
+using System.Reflection;
 
 namespace CHPEditor
 {
@@ -20,47 +21,49 @@ namespace CHPEditor
         public static uint _vbo { get; private set; }
         public static uint _ebo { get; private set; }
         public static uint _program { get; private set; }
-        public static ImGuiIOPtr _io;
-        public static LangManager lang;
-        public static ConfigManager config;
+        public static ImGuiIOPtr IO;
+        public static LangManager Lang;
+        public static ConfigManager Config;
 
         // GL locations
-        public static int tex_loc { get; private set; }
-        public static int alpha_loc { get; private set; }
-        public static int key_loc { get; private set; }
+        public static int tex_loc = 0;
+        public static int alpha_loc = 0;
+        public static int key_loc = 0;
 
         public static ImGuiController _controller { get; private set; }
         public static ImageManager? _imguiFontAtlas;
 
-        private static int bmpstate = 1;
-        private static int bmpshow = 1;
-        private static int anistate = 1;
-        private static int anishow = 1;
+        public static int bmpstate = 1;
+        public static int bmpshow = 1;
+        public static int anistate = 1;
+        public static int anishow = 1;
 
         // time-keeping stuff
-        private static double tick = 0;
-        private static bool pause = false;
-        private static int currentframe = 0;
-        private static int currenttime = 0;
+        public static double tick = 0;
+        public static bool pause = false;
+        public static int currentframe = 0;
+        public static int currenttime = 0;
 
         // CHP stuff
-        private static CHPFile chpFile;
-        private static bool anitoggle = false;
-        private static bool use2P = false;
+        public static CHPFile ChpFile;
+        public static bool anitoggle = false;
+        public static bool use2P = false;
 
         // Misc. stuff
-        private static bool useLoop = false;
-        private static bool hideBg = false;
-        private static bool hidePat = false;
-        private static int hideTexCount = 0;
-        private static int hideLayCount = 0;
+        public static bool useLoop = false;
+        public static bool hideBg = false;
+        public static bool hidePat = false;
+        public static int hideTexCount = 0;
+        public static int hideLayCount = 0;
 
 #if DEBUG
-        private static bool showDebug = false;
+        public static bool showDebug = false;
 #endif
         // private static UserConfig _userconfig;
 
-        private static readonly string window_title = "CHPEditor INDEV " + System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+        private static Assembly _assembly = Assembly.GetExecutingAssembly();
+
+        private static readonly string window_title = "CHPEditor INDEV " + Assembly.GetExecutingAssembly().GetName().Version
             #if DEBUG
             + " (DEBUG)"
             #endif
@@ -69,13 +72,19 @@ namespace CHPEditor
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            config = new ConfigManager("Config.ini");
-            lang = new LangManager(config.Lang);
-            InitLog(config.LogFileIsTimestamped);
+            Config = new ConfigManager("Config.ini");
+            Lang = new LangManager(Config.Lang);
+            InitLog(Config.LogFileIsTimestamped);
+
+            Trace.TraceInformation("Booting " + _assembly.GetName().Name + " Version " + _assembly.GetName().Version
+                #if DEBUG
+                 + " (DEBUG)"
+                #endif
+                );
 
             WindowOptions options = WindowOptions.Default;
-            options.Size = config.WindowSize;
-            options.Position = config.WindowPos;
+            options.Size = Config.WindowSize;
+            options.Position = Config.WindowPos;
             options.Title = window_title;
 
             _window = Window.Create(options);
@@ -86,14 +95,30 @@ namespace CHPEditor
             _window.FramebufferResize += Resize;
             _window.Closing += Closing;
 
-            _window.Run();
+#if !DEBUG
+            try
+            {
+#endif
+                _window.Run();
+                Trace.WriteLine("");
+                Trace.WriteLine("Exiting CHPEditor. Thank you for your support! ♪(^∇^*)");
+#if !DEBUG
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("");
+                Trace.WriteLine("An unhandled error has forced CHPEditor to shut down.");
+                Trace.WriteLine("More details:");
+                Trace.WriteLine(ex);
+            }
+#endif
         }
 
         private static void Closing()
         {
-            config.WindowSize = _window.Size;
-            config.WindowPos = _window.Position;
-            config.SaveConfig("Config.ini");
+            Config.WindowSize = _window.Size;
+            Config.WindowPos = _window.Position;
+            Config.SaveConfig("Config.ini");
         }
 
         static void InitLog(bool timestamp)
@@ -128,11 +153,11 @@ namespace CHPEditor
                 input.Keyboards[i].KeyDown += KeyDown;
 
             _controller = new ImGuiController(_gl, _window, input);
-            _io = ImGui.GetIO();
-            _io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+            IO = ImGui.GetIO();
+            IO.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
             #region ImGUI Font Setup
-            lang.UseFont();
+            Lang.UseFont();
             #endregion
 
             #endregion
@@ -170,7 +195,7 @@ namespace CHPEditor
 
             #region Vertex/Fragment
             const string vertexCode = @"
-#version 330 core
+# version 330 core
 
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec2 aTextureCoord;
@@ -183,7 +208,7 @@ void main()
     frag_texCoords = aTextureCoord;
 }";
             const string fragmentCode = @"
-#version 330 core
+# version 330 core
 
 uniform sampler2D uTexture;
 uniform float fragAlpha;
@@ -264,7 +289,7 @@ void main()
             alpha_loc = _gl.GetUniformLocation(_program, "fragAlpha");
             key_loc = _gl.GetUniformLocation(_program, "fragColorKey");
 
-            chpFile = new CHPFile(config.Path);
+            ChpFile = new CHPFile(Config.Path);
         }
         static void Update(double deltaTime)
         {
@@ -279,36 +304,36 @@ void main()
                 switch (bmpshow)
                 {
                     case 1:
-                        RenderTex(chpFile.CharBMP);
+                        RenderTex(ChpFile.CharBMP);
                         break;
                     case 2:
-                        RenderTex(chpFile.CharBMP2P);
+                        RenderTex(ChpFile.CharBMP2P);
                         break;
                     case 3:
-                        RenderTex(chpFile.CharFace);
+                        RenderTex(ChpFile.CharFace);
                         break;
                     case 4:
-                        RenderTex(chpFile.CharFace2P);
+                        RenderTex(ChpFile.CharFace2P);
                         break;
                     case 5:
-                        RenderTex(chpFile.SelectCG);
+                        RenderTex(ChpFile.SelectCG);
                         break;
                     case 6:
-                        RenderTex(chpFile.SelectCG2P);
+                        RenderTex(ChpFile.SelectCG2P);
                         break;
                     case 7:
-                        RenderTex(chpFile.CharTex);
+                        RenderTex(ChpFile.CharTex);
                         break;
                     case 8:
-                        RenderTex(chpFile.CharTex2P);
+                        RenderTex(ChpFile.CharTex2P);
                         break;
                 }
             else
             {
-                RenderAnimation(ref chpFile);
+                RenderAnimation(ref ChpFile);
             }
 
-            ImGui_StateSetup();
+            ImGuiManager.Draw();
 
             _controller.Render();
         }
@@ -320,236 +345,10 @@ void main()
         {
             
         }
-        // ImGui Window(s)
-        static void ImGui_StateSetup()
-        {
-            #region CHP Selector
-#if DEBUG
-            if (showDebug)
-                ImGui.ShowDemoWindow();
-#endif
-            ImGui.SetNextWindowDockID(1, ImGuiCond.FirstUseEver);
-            ImGui.Begin(lang.GetValue("WINDOW_PREVIEW_SELECTOR_TITLE") + "###SELECT");
-            ImGui.SetWindowPos(new System.Numerics.Vector2(0,0), ImGuiCond.FirstUseEver);
-            ImGui.SetWindowSize(new System.Numerics.Vector2(300, 300), ImGuiCond.FirstUseEver);
-
-            if (ImGui.BeginTabBar("DisplayMode"))
-            {
-                if (ImGui.BeginTabItem(lang.GetValue("TAB_BITMAPS")))
-                {
-                    anitoggle = false;
-                    string[] bmpnames = ["CharBMP", "CharBMP2P", "CharFace", "CharFace2P", "SelectCG", "SelectCG2P", "CharTex", "CharTex2P"];
-                    for (int i = 1; i <= 8; i++)
-                    {
-                        if (ImGui.Selectable(bmpnames[i-1], bmpshow == i))
-                        {
-                            Trace.TraceInformation("Displaying " + bmpnames[i-1]);
-                            bmpshow = i;
-                        }
-                    }
-                    ImGui.EndTabItem();
-                }                
-                if (ImGui.BeginTabItem(lang.GetValue("TAB_ANIMATIONS")))
-                {
-                    anitoggle = true;
-
-                    ImGui.Checkbox(lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref pause);
-                    if (chpFile.CharBMP2P.Loaded)
-                        ImGui.Checkbox(lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref use2P);
-
-                    ImGui.Separator();
-                    for (int i = 1; i <= 18; i++)
-                    {
-                        string text = lang.GetValue("STATE_FULL_INDEXED", i, lang.GetValue(string.Format("STATE{0}_TITLE", i)));
-                        if (ImGui.Selectable(text, anishow == i))
-                        {
-                            Trace.TraceInformation("Previewing " + text);
-                            anishow = i;
-                            tick = 0;
-                        }
-                    }
-                    ImGui.EndTabItem();
-                }
-                ImGui.EndTabBar();
-            }
-            ImGui.End();
-            #endregion
-
-            #region CHP Info
-            ImGui.SetNextWindowDockID(2, ImGuiCond.FirstUseEver);
-            ImGui.Begin(lang.GetValue("WINDOW_CHP_INFO_TITLE") + "###INFO");
-            ImGui.SetWindowPos(new System.Numerics.Vector2(300, 0), ImGuiCond.FirstUseEver);
-            ImGui.SetWindowSize(new System.Numerics.Vector2(300, 300), ImGuiCond.FirstUseEver);
-
-            ImGui.InputTextWithHint(lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref config.Path, 64);
-            if (ImGui.Button(lang.GetValue("CHP_RELOAD_PROMPT")))
-            {
-                chpFile.Dispose();
-                chpFile = null;
-                chpFile = new CHPFile(config.Path);
-                currentframe = 0;
-                currenttime = 0;
-            }
-#if DEBUG
-            ImGui.Checkbox("DEBUG ONLY! Show ImGUI Demo Window", ref showDebug);
-#endif
-            ImGui.Separator();
-            if (chpFile.Loaded)
-            {
-                ImGui.Text(lang.GetValue("CHP_FILE_INFO", chpFile.FileName, chpFile.FileEncoding.WebName));
-
-                if (!string.IsNullOrEmpty(chpFile.CharName)) ImGui.Text(lang.GetValue("CHP_CHARA_NAME", chpFile.CharName));
-                if (!string.IsNullOrEmpty(chpFile.Artist)) ImGui.Text(lang.GetValue("CHP_CHARA_ARTIST", chpFile.Artist));
-
-                ImGui.Separator();
-
-                if (!anitoggle)
-                {
-                    string bmpname = lang.GetValue("CHP_BMP_PATH_NONE");
-                    Vector2D<int> bmpsize = new Vector2D<int>(0, 0);
-                    System.Drawing.Color bmpcolor = System.Drawing.Color.Transparent;
-                    switch (bmpstate)
-                    {
-                        case 1:
-                            if (chpFile.CharBMP.Loaded)
-                            {
-                                bmpname = chpFile.CharBMP.Path;
-                                bmpsize = chpFile.CharBMP.Bounds;
-                                bmpcolor = chpFile.CharBMP.ColorKey;
-                            }
-                            break;
-                        case 2:
-                            if (chpFile.CharBMP2P.Loaded)
-                            {
-                                bmpname = chpFile.CharBMP2P.Path;
-                                bmpsize = chpFile.CharBMP2P.Bounds;
-                                bmpcolor = chpFile.CharBMP2P.ColorKey;
-                            }
-                            break;
-                        case 3:
-                            if (chpFile.CharFace.Loaded)
-                            {
-                                bmpname = chpFile.CharFace.Path;
-                                bmpsize = chpFile.CharFace.Bounds;
-                                bmpcolor = chpFile.CharFace.ColorKey;
-                            }
-                            break;
-                        case 4:
-                            if (chpFile.CharFace2P.Loaded)
-                            {
-                                bmpname = chpFile.CharFace2P.Path;
-                                bmpsize = chpFile.CharFace2P.Bounds;
-                                bmpcolor = chpFile.CharFace2P.ColorKey;
-                            }
-                            break;
-                        case 5:
-                            if (chpFile.SelectCG.Loaded)
-                            {
-                                bmpname = chpFile.SelectCG.Path;
-                                bmpsize = chpFile.SelectCG.Bounds;
-                                bmpcolor = chpFile.SelectCG.ColorKey;
-                            }
-                            break;
-                        case 6:
-                            if (chpFile.SelectCG2P.Loaded)
-                            {
-                                bmpname = chpFile.SelectCG2P.Path;
-                                bmpsize = chpFile.SelectCG2P.Bounds;
-                                bmpcolor = chpFile.SelectCG2P.ColorKey;
-                            }
-                            break;
-                        case 7:
-                            if (chpFile.CharTex.Loaded)
-                            {
-                                bmpname = chpFile.CharTex.Path;
-                                bmpsize = chpFile.CharTex.Bounds;
-                                bmpcolor = chpFile.CharTex.ColorKey;
-                            }
-                            break;
-                        case 8:
-                            if (chpFile.CharTex2P.Loaded)
-                            {
-                                bmpname = chpFile.CharTex2P.Path;
-                                bmpsize = chpFile.CharTex2P.Bounds;
-                                bmpcolor = chpFile.CharTex2P.ColorKey;
-                            }
-                            break;
-                    }
-                    ImGui.Text(lang.GetValue("CHP_BMP_PATH", bmpname));
-                    ImGui.Text(lang.GetValue("CHP_BMP_SIZE", bmpsize.X, bmpsize.Y));
-                    ImGui.Text(lang.GetValue("CHP_BMP_COLORKEY", bmpcolor.R, bmpcolor.G, bmpcolor.B, bmpcolor.A));
-                }
-                else
-                {
-                    ImGui.Text(lang.GetValue("STATE_INDEXED", anistate) + "\n\n");
-                    if (chpFile.AnimeCollection[anistate - 1].Loaded)
-                    {
-                        if (chpFile.AnimeCollection[anistate - 1].Frame != 0)
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_TIMELINE", 
-                                currentframe,
-                                chpFile.AnimeCollection[anistate - 1].FrameCount - 1,
-                                Math.Round(currenttime / 1000.0, 2),
-                                (chpFile.AnimeCollection[anistate - 1].Frame * chpFile.AnimeCollection[anistate - 1].FrameCount) / 1000.0
-                                ));
-                            ImGui.Text(lang.GetValue("CHP_CHARA_FPS", 1000.0f / chpFile.AnimeCollection[anistate - 1].Frame, chpFile.AnimeCollection[anistate - 1].Frame));
-                        }                        
-                        else
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_TIMELINE",
-                                currentframe,
-                                chpFile.AnimeCollection[anistate - 1].FrameCount - 1,
-                                Math.Round(currenttime / 1000.0, 2),
-                                (chpFile.Anime * chpFile.AnimeCollection[anistate - 1].FrameCount) / 1000.0
-                                ));
-                            ImGui.Text(lang.GetValue("CHP_CHARA_FPS", 1000.0f / chpFile.Anime, chpFile.Anime));
-                        }
-
-                        if (chpFile.AnimeCollection[anistate - 1].Loop > 0)
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_LOOP", chpFile.AnimeCollection[anistate - 1].Loop));
-                            ImGui.Checkbox(lang.GetValue("CHP_CHARA_LOOP_PROMPT"), ref useLoop);
-                        }
-
-                        ImGui.Separator();
-
-                        if (anishow != 14)
-                            ImGui.Checkbox(lang.GetValue("CHP_CHARA_HIDE_BG_PROMPT"), ref hideBg);
-                        if (chpFile.AnimeCollection[anistate - 1].Pattern != null)
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_PATTERN_ACTIVE"));
-                            ImGui.Checkbox(lang.GetValue("CHP_CHARA_HIDE_PATTERN_PROMPT"), ref hidePat);
-                        }
-                        if (chpFile.AnimeCollection[anistate - 1].Texture != null)
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", chpFile.AnimeCollection[anistate - 1].Texture.Count));
-                            ImGui.SliderInt(lang.GetValue("CHP_CHARA_HIDE_TEXTURE_PROMPT"), ref hideTexCount, 0, chpFile.AnimeCollection[anistate - 1].Texture.Count);
-                        }
-                        if (chpFile.AnimeCollection[anistate - 1].Layer != null)
-                        {
-                            ImGui.Text(lang.GetValue("CHP_CHARA_LAYER_ACTIVE", chpFile.AnimeCollection[anistate - 1].Layer.Count));
-                            ImGui.SliderInt(lang.GetValue("CHP_CHARA_HIDE_LAYER_PROMPT"), ref hideLayCount, 0, chpFile.AnimeCollection[anistate - 1].Layer.Count);
-                        }
-                    }
-                    else
-                    {
-                        ImGui.TextDisabled(lang.GetValue("CHP_CHARA_ANIMATION_NONE"));
-                    }
-                }
-
-            }
-            else
-            {
-                ImGui.TextColored(new System.Numerics.Vector4(1.0f, 0.5f, 0.5f, 1.0f), lang.GetValue("CHP_FILE_LOAD_FAIL"));
-                ImGui.TextWrapped(chpFile.Error);
-            }
-            ImGui.End();
-            #endregion
-        }
         // Texture Drawing
         static void RenderTex(CHPFile.BitmapData data)
         {
-            if (chpFile.Loaded)
+            if (ChpFile.Loaded)
             {
                 if (bmpshow != bmpstate)
                 {
@@ -581,30 +380,31 @@ void main()
 
                     #region Update Frame
                     // Get the current frame
-                    if (chpFile.AnimeCollection[state].Frame > 0)
+                    if (ChpFile.AnimeCollection[state].Frame > 0)
                     {
-                        if (chpFile.AnimeCollection[state].Loop > 0 && useLoop)
+                        if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
                         {
-                            currentframe = (((int)tick / chpFile.AnimeCollection[state].Frame) % (chpFile.AnimeCollection[state].FrameCount - chpFile.AnimeCollection[state].Loop)) + chpFile.AnimeCollection[state].Loop;
-                            currenttime = ((int)tick % (chpFile.AnimeCollection[state].Frame * (chpFile.AnimeCollection[state].FrameCount - chpFile.AnimeCollection[state].Loop)) + (chpFile.AnimeCollection[state].Frame * chpFile.AnimeCollection[state].Loop));
+                            int loop = Math.Clamp(ChpFile.AnimeCollection[state].Loop, 0, ChpFile.AnimeCollection[state].FrameCount - 1);
+                            currentframe = (((int)tick / ChpFile.AnimeCollection[state].Frame) % (ChpFile.AnimeCollection[state].FrameCount - loop)) + ChpFile.AnimeCollection[state].Loop;
+                            currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * (ChpFile.AnimeCollection[state].FrameCount - loop)) + (ChpFile.AnimeCollection[state].Frame * loop));
                         }
                         else
                         {
-                            currentframe = ((int)tick / chpFile.AnimeCollection[state].Frame) % chpFile.AnimeCollection[state].FrameCount;
-                            currenttime = ((int)tick % (chpFile.AnimeCollection[state].Frame * chpFile.AnimeCollection[state].FrameCount));
+                            currentframe = ((int)tick / ChpFile.AnimeCollection[state].Frame) % ChpFile.AnimeCollection[state].FrameCount;
+                            currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * ChpFile.AnimeCollection[state].FrameCount));
                         }
                     }
                     else
                     {
-                        if (chpFile.AnimeCollection[state].Loop > 0 && useLoop)
+                        if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
                         {
-                            currentframe = ((int)tick / chpFile.Anime) % (chpFile.AnimeCollection[state].FrameCount - chpFile.AnimeCollection[state].Loop) + chpFile.AnimeCollection[state].Loop;
-                            currenttime = ((int)tick % (chpFile.Anime * (chpFile.AnimeCollection[state].FrameCount - chpFile.AnimeCollection[state].Loop)) + (chpFile.Anime * chpFile.AnimeCollection[state].Loop));
+                            currentframe = ((int)tick / ChpFile.Anime) % (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop) + ChpFile.AnimeCollection[state].Loop;
+                            currenttime = ((int)tick % (ChpFile.Anime * (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop)) + (ChpFile.Anime * ChpFile.AnimeCollection[state].Loop));
                         }
                         else
                         {
-                            currentframe = ((int)tick / chpFile.Anime) % chpFile.AnimeCollection[state].FrameCount;
-                            currenttime = ((int)tick % (chpFile.Anime * chpFile.AnimeCollection[state].FrameCount));
+                            currentframe = ((int)tick / ChpFile.Anime) % ChpFile.AnimeCollection[state].FrameCount;
+                            currenttime = ((int)tick % (ChpFile.Anime * ChpFile.AnimeCollection[state].FrameCount));
                         }
                     }
                     #endregion
@@ -918,7 +718,7 @@ void main()
 
             _gl.Uniform1(tex_loc, 0);
             _gl.Uniform1(alpha_loc, alpha);
-            if (chpFile.AutoColorSet && bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Auto ||
+            if (ChpFile.AutoColorSet && bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Auto ||
                 bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Manual)
                 _gl.Uniform4(key_loc, (float)bitmap_data.ColorKey.R / 255.0f, (float)bitmap_data.ColorKey.G / 255.0f, (float)bitmap_data.ColorKey.B / 255.0f, (float)bitmap_data.ColorKey.A / 255.0f);
             else

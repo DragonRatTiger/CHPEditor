@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using StbImageSharp;
@@ -52,16 +51,20 @@ namespace CHPEditor
                         if (path.Equals(single_path, StringComparison.OrdinalIgnoreCase))
                             Path = single_path;
                     }
+                    if (!File.Exists(Path))
+                        throw new FileNotFoundException("Path does not exist.", Path);
                     LoadImage(ImageResult.FromMemory(File.ReadAllBytes(Path), ColorComponents.RedGreenBlueAlpha));
                 }
                 else
                 {
+                    if (!File.Exists(RequestedPath))
+                        throw new FileNotFoundException("Path does not exist.", Path);
                     LoadImage(ImageResult.FromMemory(File.ReadAllBytes(RequestedPath), ColorComponents.RedGreenBlueAlpha));
                 }
             }
             catch (FileNotFoundException e)
             {
-                Trace.TraceError(RequestedPath + " could not be found. (Load option: " + (caseInsensitive ? "Case-insensitive" : "Case-sensitive") + ") More details: " + e);
+                Trace.TraceError(Path + " could not be found. (Load option: " + (caseInsensitive ? "Case-insensitive" : "Case-sensitive") + ") More details: " + e);
             }
             catch (Exception e)
             {

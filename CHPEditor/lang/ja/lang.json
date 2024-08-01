@@ -18,6 +18,8 @@
   ],
 
   "Entries": {
+
+
     "WINDOW_PREVIEW_SELECTOR_TITLE": "Selector",
     "WINDOW_CHP_INFO_TITLE": "Information",
 
@@ -42,6 +44,7 @@
     "CHP_CHARA_TIMELINE": "Timeline: {0}/{1} ({2}s/{3}s)",
     "CHP_CHARA_FPS": "FPS: {0} ({1}ms/フレーム)",
     "CHP_CHARA_LOOP": "ループ Index: {0}",
+    "CHP_CHARA_LOOP_WARN_BOUNDS": "ループ Index: {0} (OUT OF BOUNDS!)",
     "CHP_CHARA_PATTERN_ACTIVE": "Pattern is Active",
     "CHP_CHARA_TEXTURE_ACTIVE": "Total Textures Used: {0}",
     "CHP_CHARA_LAYER_ACTIVE": "Total Layers Used: {0}",
