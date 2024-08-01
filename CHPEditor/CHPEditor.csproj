@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="README_DONT_IGNORE_THIS.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="README.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Licenses/**" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="lang/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

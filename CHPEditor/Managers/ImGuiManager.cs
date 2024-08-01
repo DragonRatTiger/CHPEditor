@@ -11,16 +11,16 @@ namespace CHPEditor
     {
         public static void Draw()
         {
-            if (ImGui.BeginMainMenuBar())
-            {
-                if (ImGui.BeginMenu("File###MENU_FILE"))
-                {
-                    ImGui.MenuItem("New###MENU_FILE_NEW", "CTRL+N");
-                    ImGui.EndMenu();
-                }
+            //if (ImGui.BeginMainMenuBar())
+            //{
+            //    if (ImGui.BeginMenu("File###MENU_FILE"))
+            //    {
+            //        ImGui.MenuItem("New###MENU_FILE_NEW", "CTRL+N");
+            //        ImGui.EndMenu();
+            //    }
 
-                ImGui.EndMainMenuBar();
-            }
+            //    ImGui.EndMainMenuBar();
+            //}
             #region CHP Selector
 #if DEBUG
             if (CHPEditor.showDebug)
