@@ -107,7 +107,7 @@ namespace CHPEditor
             catch (Exception ex)
             {
                 Trace.WriteLine("");
-                Trace.WriteLine("An unhandled error has forced CHPEditor to shut down.");
+                Trace.WriteLine("An unhandled exception has forced CHPEditor to shut down.");
                 Trace.WriteLine("More details:");
                 Trace.WriteLine(ex);
             }

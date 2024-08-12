@@ -119,6 +119,8 @@ namespace CHPEditor
                 AnimeCollection = new AnimeData[18];
                 InterpolateCollection = new InterpolateData[18];
 
+                bool parseAsHex = false;
+
                 filedata = filedata.Replace("\r\n", "\n");
                 string[] lines = filedata.Split("\n");
                 foreach (string line in lines)
@@ -128,43 +130,44 @@ namespace CHPEditor
                     else
                     {
                         // parsing time :)
-                        string[] split = line.Split('\t', StringSplitOptions.RemoveEmptyEntries);
+                        string line_trimmed = line.Substring(0, line.IndexOf("//") > -1 ? line.IndexOf("//") : line.Length);
+                        string[] split = line_trimmed.Split(new char[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         //if (line.IndexOf("\t") < 0)
                             //continue;
-                        split = split.Where(str => !str.StartsWith("//")).ToArray();
-                        int line_end = line.IndexOf("\t") > 0 ? line.IndexOf("\t") : line.Length;
-                        switch (line.Substring(0, line_end).ToLower())
+                        //split = split.Where(str => !str.StartsWith("//")).ToArray();
+                        //int line_end = line_trimmed.IndexOf("\t") > 0 ? line_trimmed.IndexOf("\t") : (line_trimmed.IndexOf(" ") > 0 ? line_trimmed.IndexOf(" ") : line_trimmed.Length);
+                        switch (split[0].ToLower())
                         {
                             #region Chara name & artist
                             case "#charname":
-                                CharName = split[1];
+                                CharName = SquashArray(split, 2)[1];
                                 break;
 
                             case "#artist":
-                                Artist = split[1];
+                                Artist = SquashArray(split, 2)[1];
                                 break;
                             #endregion
                             #region Bitmaps
                             case "#charbmp":
-                                LoadTexture(ref CharBMP, split[1]);
+                                LoadTexture(ref CharBMP, SquashArray(split, 2)[1]);
                                 break;
 
                             case "#charbmp2p":
-                                LoadTexture(ref CharBMP2P, split[1]);
+                                LoadTexture(ref CharBMP2P, SquashArray(split, 2)[1]);
                                 break;
 
                             // Regarding CharFace's background, ColorSet is ignored, and always uses Black (0,0,0,255) as the transparency color.
                             // This is my assumption at least, as every single CharFace I've looked at uses a pure black background.
                             case "#charface":
-                                LoadTexture(ref CharFace, split[1], ColorKeyType.Manual, 0, 0, 0);
+                                LoadTexture(ref CharFace, SquashArray(split, 2)[1], ColorKeyType.Manual, 0, 0, 0);
                                 break;
 
                             case "#charface2p":
-                                LoadTexture(ref CharFace2P, split[1], ColorKeyType.Manual, 0, 0, 0);
+                                LoadTexture(ref CharFace2P, SquashArray(split, 2)[1], ColorKeyType.Manual, 0, 0, 0);
                                 break;
 
                             case "#selectcg":
-                                string cgfile = split[1];
+                                string cgfile = SquashArray(split, 2)[1];
                                 string cgfile2 = cgfile.Replace("1p", "2p");
 
                                 LoadTexture(ref SelectCG, cgfile, 0);
@@ -181,11 +184,11 @@ namespace CHPEditor
                                 break;
 
                             case "#chartex":
-                                LoadTexture(ref CharTex, split[1]);
+                                LoadTexture(ref CharTex, SquashArray(split, 2)[1]);
                                 break;
 
                             case "#chartex2p":
-                                LoadTexture(ref CharTex2P, split[1]);
+                                LoadTexture(ref CharTex2P, SquashArray(split, 2)[1]);
                                 break;
                             #endregion
                             #region Chara parameters
@@ -385,7 +388,7 @@ namespace CHPEditor
                                     for (int i = 0; i < RectCollection.Length; i++)
                                         RectCollection[i] = new Rectangle<int>(0,0,0,0);
                                 }
-                                if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number))
+                                if (!parseAsHex && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
                                 {
                                     if (split.Length >= 2 && int.TryParse(split[1], out int x))
                                         RectCollection[number].Origin.X = x;
@@ -395,6 +398,18 @@ namespace CHPEditor
                                         RectCollection[number].Size.X = w;
                                     if (split.Length >= 5 && int.TryParse(split[4], out int h))
                                         RectCollection[number].Size.Y = h;
+                                }
+                                else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
+                                {
+                                    parseAsHex = true;
+                                    if (split.Length >= 2 && int.TryParse(split[1], out int x))
+                                        RectCollection[number_from_hex].Origin.X = x;
+                                    if (split.Length >= 3 && int.TryParse(split[2], out int y))
+                                        RectCollection[number_from_hex].Origin.Y = y;
+                                    if (split.Length >= 4 && int.TryParse(split[3], out int w))
+                                        RectCollection[number_from_hex].Size.X = w;
+                                    if (split.Length >= 5 && int.TryParse(split[4], out int h))
+                                        RectCollection[number_from_hex].Size.Y = h;
                                 }
                                 break;
                         }
@@ -432,6 +447,10 @@ namespace CHPEditor
                             "Frame Counts: " + (string.Join(",", all_lengths.Select(len => len.ToString()).ToArray())));
                 }
                 Loaded = true;
+                Trace.TraceInformation("Pomyu Chara loaded!");
+                Trace.TraceInformation("File Name: " + FileName);
+                Trace.TraceInformation("Chara Name: " + CharName);
+                Trace.TraceInformation("Artist: " + Artist);
             }
             catch (FileNotFoundException e)
             {
@@ -471,6 +490,15 @@ namespace CHPEditor
         private string GetPath(string path)
         {
             return Path.Combine(FolderPath, path);
+        }
+
+        private string[] SquashArray(string[] array, int size, char joiner = ' ')
+        {
+            for (int i = size; i < array.Length; i++)
+            {
+                array[size - 1] += joiner + array[i];
+            }
+            return array;
         }
 
         #region Dispose
