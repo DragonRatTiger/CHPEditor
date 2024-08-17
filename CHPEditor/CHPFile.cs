@@ -291,6 +291,18 @@ namespace CHPEditor
                                                             };
                                                         }
                                                     }
+                                                    else if (InterpolateCollection[texture].Texture.Last()[j] != null && i - 1 > 0)
+                                                    {
+                                                        if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
+                                                            InterpolateCollection[texture].Texture.Last()[j][InterpolateCollection[texture].Texture.Last()[j].Length - 1][1] +=
+                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime;
+                                                    }
+                                                }
+                                                else if (InterpolateCollection[texture].Texture.Last()[j] != null && i - 1 > 0)
+                                                {
+                                                    if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
+                                                        InterpolateCollection[texture].Texture.Last()[j][InterpolateCollection[texture].Texture.Last()[j].Length - 1][1] +=
+                                                            AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime;
                                                 }
                                                 #endregion
                                             }
@@ -336,7 +348,7 @@ namespace CHPEditor
                                             #region Interpolate
                                             if (i + 1 < AnimeCollection[layer].Layer.Last().Length)
                                             {
-                                                if (!int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
+                                                if (!int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
                                                 {
                                                     if (InterpolateCollection[layer].Layer.Last()[j] == null)
                                                     {
@@ -359,6 +371,18 @@ namespace CHPEditor
                                                             };
                                                     }
                                                 }
+                                                else if (InterpolateCollection[layer].Layer.Last()[j] != null && i - 1 > 0)
+                                                {
+                                                    if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
+                                                        InterpolateCollection[layer].Layer.Last()[j][InterpolateCollection[layer].Layer.Last()[j].Length - 1][1] +=
+                                                            AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime;
+                                                }
+                                            }
+                                            else if (InterpolateCollection[layer].Layer.Last()[j] != null && i - 1 > 0)
+                                            {
+                                                if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
+                                                    InterpolateCollection[layer].Layer.Last()[j][InterpolateCollection[layer].Layer.Last()[j].Length - 1][1] +=
+                                                        AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime;
                                             }
                                             #endregion
                                         }
