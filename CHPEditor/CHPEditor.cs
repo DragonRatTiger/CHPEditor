@@ -414,7 +414,7 @@ void main()
 
                     Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(chpfile.Size[0], chpfile.Size[1]) };
 
-                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y - chpfile.RectCollection[0].Size.Y), Size = new Vector2D<int>(chpfile.RectCollection[0].Size.X, chpfile.RectCollection[0].Size.Y) };
+                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((chpfile.RectCollection[1].Size.X - chpfile.RectCollection[0].Size.X) / 2), anchor_y - chpfile.RectCollection[0].Size.Y), Size = new Vector2D<int>(chpfile.RectCollection[0].Size.X, chpfile.RectCollection[0].Size.Y) };
 
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
