@@ -425,7 +425,18 @@ namespace CHPEditor
                                 }
                                 else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
                                 {
-                                    parseAsHex = true;
+                                    if (!parseAsHex)
+                                    {
+                                        Rectangle<int>[] newRect = new Rectangle<int>[Data * Data];
+                                        for (int i = 0; i < RectCollection.Length; i++)
+                                        {
+                                            if (RectCollection[i] != new Rectangle<int>(0, 0, 0, 0))
+                                                newRect[int.Parse(i.ToString(), NumberStyles.HexNumber)] = RectCollection[i];
+                                        }
+                                        RectCollection = newRect;
+                                        parseAsHex = true;
+                                    }
+
                                     if (split.Length >= 2 && int.TryParse(split[1], out int x))
                                         RectCollection[number_from_hex].Origin.X = x;
                                     if (split.Length >= 3 && int.TryParse(split[2], out int y))
