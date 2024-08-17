@@ -33,6 +33,7 @@
     <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
     <PackageReference Include="StbImageSharp" Version="2.27.14" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
     <PackageReference Include="Ude.NetStandard" Version="1.2.0" />
   </ItemGroup>
 
