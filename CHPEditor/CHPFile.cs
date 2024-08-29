@@ -33,7 +33,7 @@ namespace CHPEditor
         public Encoding FileEncoding { get; private set; }
 
         public int Anime = 83;
-        public int[] Size = [167, 271];
+        public int[] Size = [121, 271];
         public int Wait = 1;
         public int Data = 16; // Required for hexadecimal conversion
         public bool AutoColorSet = false;
@@ -125,7 +125,7 @@ namespace CHPEditor
                 string[] lines = filedata.Split("\n");
                 foreach (string line in lines)
                 {
-                    if (line.StartsWith("//") || string.IsNullOrWhiteSpace(line))
+                    if (line.StartsWith("/") || line.StartsWith("//") || string.IsNullOrWhiteSpace(line))
                         continue;
                     else
                     {
