@@ -413,8 +413,8 @@ void main()
                     int anchor_y = (_window.FramebufferSize.Y / 2) - (chpfile.Size[1] / 2);
 
                     Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(chpfile.Size[0], chpfile.Size[1]) };
-                    Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(Math.Min(chpfile.RectCollection[1].Size.X, chpfile.Size[0]), Math.Min(chpfile.RectCollection[1].Size.Y, chpfile.Size[1])) };
-                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - chpfile.RectCollection[0].Size.X) / 2), anchor_y - chpfile.RectCollection[0].Size.Y), Size = new Vector2D<int>(chpfile.RectCollection[0].Size.X, chpfile.RectCollection[0].Size.Y) };
+                    Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(chpfile.Size[0], chpfile.Size[1]) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
+                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(chpfile.RectCollection[0].Size.X, chpfile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
 
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
@@ -719,7 +719,8 @@ void main()
             _gl.Uniform1(tex_loc, 0);
             _gl.Uniform1(alpha_loc, alpha);
             if (ChpFile.AutoColorSet && bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Auto ||
-                bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Manual)
+                bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Manual ||
+                ChpFile.IsLegacy)
                 _gl.Uniform4(key_loc, (float)bitmap_data.ColorKey.R / 255.0f, (float)bitmap_data.ColorKey.G / 255.0f, (float)bitmap_data.ColorKey.B / 255.0f, (float)bitmap_data.ColorKey.A / 255.0f);
             else
                 _gl.Uniform4(key_loc, 0.0, 0.0, 0.0, 0.0);

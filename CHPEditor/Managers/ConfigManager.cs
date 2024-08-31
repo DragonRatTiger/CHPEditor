@@ -1,4 +1,5 @@
 ﻿using Silk.NET.Maths;
+using System.Drawing;
 using System.IO;
 using System.Text;
 
@@ -10,6 +11,11 @@ namespace CHPEditor
         public string Path;
         public Vector2D<int> WindowSize;
         public Vector2D<int> WindowPos;
+        public Size NameSize;
+        public Size BackgroundSize;
+        public bool UseDataSizeForName;
+        public bool UseCharaSizeForBackground;
+
         public bool LogFileIsTimestamped;
 
         private Encoding _encoding;
@@ -20,6 +26,11 @@ namespace CHPEditor
             Path = "chara" + System.IO.Path.DirectorySeparatorChar + "chara.chp";
             WindowSize = new Vector2D<int>(800, 640);
             WindowPos = new Vector2D<int>(50, 50);
+            NameSize = new Size(131, 29);
+            BackgroundSize = new Size(167, 271);
+            UseDataSizeForName = false;
+            UseCharaSizeForBackground = false;
+            
             LogFileIsTimestamped = false;
 
             if (File.Exists(path))
@@ -49,9 +60,29 @@ namespace CHPEditor
                                 if (int.TryParse(pos[0], out int x) && int.TryParse(pos[1], out int y))
                                     WindowPos = new Vector2D<int>(x, y);
                             break;
+                        case "NameSize":
+                            string[] namesize = split[1].Split(',');
+                            if (namesize.Length == 2)
+                                if (int.TryParse(namesize[0], out int x) && int.TryParse(namesize[1], out int y))
+                                    NameSize = new Size(x, y);
+                            break;
+                        case "BackgroundSize":
+                            string[] backgroundsize = split[1].Split(',');
+                            if (backgroundsize.Length == 2)
+                                if (int.TryParse(backgroundsize[0], out int x) && int.TryParse(backgroundsize[1], out int y))
+                                    BackgroundSize = new Size(x, y);
+                            break;
+                        case "UseDataSizeForName":
+                            if (int.TryParse(split[1], out int usenamesize))
+                                UseDataSizeForName = IntToBool(usenamesize);
+                            break;
+                        case "UseCharaSizeForBackground":
+                            if (int.TryParse(split[1], out int usecharasize))
+                                UseCharaSizeForBackground = IntToBool(usecharasize);
+                            break;
                         case "LogFileIsTimestamped":
-                            if (bool.TryParse(split[1], out bool result))
-                                LogFileIsTimestamped = result;
+                            if (int.TryParse(split[1], out int result))
+                                LogFileIsTimestamped = IntToBool(result);
                             break;
                     }
                 }
@@ -70,10 +101,16 @@ namespace CHPEditor
                 writer.WriteLine("Path=" + Path);
                 writer.WriteLine("WindowSize=" + WindowSize.X + "," + WindowSize.Y);
                 writer.WriteLine("WindowPos=" + WindowPos.X + "," + WindowPos.Y);
-                writer.WriteLine("LogFileIsTimestamped=" + LogFileIsTimestamped.ToString());
+                writer.WriteLine("NameSize=" + NameSize.Width + "," + NameSize.Height);
+                writer.WriteLine("BackgroundSize=" + BackgroundSize.Width + "," + BackgroundSize.Height);
+                writer.WriteLine("UseDataSizeForName=" + BoolToInt(UseDataSizeForName));
+                writer.WriteLine("UseCharaSizeForBackground=" + BoolToInt(UseCharaSizeForBackground));
+                writer.WriteLine("LogFileIsTimestamped=" + BoolToInt(LogFileIsTimestamped));
                 writer.Close();
             }
 
         }
+        private bool IntToBool(int value) { return value != 0; }
+        private int BoolToInt(bool value) { return value ? 1 : 0; }
     }
 }

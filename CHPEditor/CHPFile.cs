@@ -38,6 +38,8 @@ namespace CHPEditor
         public int Data = 16; // Required for hexadecimal conversion
         public bool AutoColorSet = false;
 
+        public bool IsLegacy { get; private set; } = true;
+
         public struct AnimeData
         {
             public bool Loaded;
@@ -119,8 +121,6 @@ namespace CHPEditor
                 AnimeCollection = new AnimeData[18];
                 InterpolateCollection = new InterpolateData[18];
 
-                bool parseAsHex = false;
-
                 filedata = filedata.Replace("\r\n", "\n");
                 string[] lines = filedata.Split("\n");
                 foreach (string line in lines)
@@ -171,16 +171,6 @@ namespace CHPEditor
                                 string cgfile2 = cgfile.Replace("1p", "2p");
 
                                 LoadTexture(ref SelectCG, cgfile, 0);
-
-                                // 2P version of SelectCG. For some reason, #SelectCG2P does not exist on any CHP that I've seen, but the 2P icon is still loaded anyways.
-                                // This is my assumption of how it's loaded.
-                                if (File.Exists(GetPath(cgfile2)) && cgfile2.Contains("2p"))
-                                {
-                                    LoadTexture(ref SelectCG2P, cgfile2, 0);
-                                }
-                                else
-                                    Trace.TraceWarning("SelectCG's 2P equivalent couldn't be found. If you don't have a 2P palette, or if you prefer to not use a 2P icon, you can ignore this message. Otherwise, you may want to check that your file is named correctly. (Try replacing \"1p\" with \"2p\")");
-                                
                                 break;
 
                             case "#chartex":
@@ -214,6 +204,7 @@ namespace CHPEditor
                             case "#data":
                                 if (!int.TryParse(split[1], out Data))
                                     Trace.TraceError("Failed to parse Data value. Did you write it correctly?");
+                                IsLegacy = false;
                                 break;
                             #endregion
                             #region Animation
@@ -224,13 +215,13 @@ namespace CHPEditor
                                 break;
 
                             case "#flame": // This is the correct command, it's just a misspelling that ended up being final.
-                            case "#frame": // Optionally including this one just in case.
+                            case "#frame": // Alternate command added in beatoraja
                                 int flame = int.Parse(split[1]) - 1;
                                 AnimeCollection[flame].Frame = int.Parse(split[2]);
                                 break;
 
                             case "#patern": // This is also the correct command, but was once again misspelled.
-                            case "#pattern": // Also optionally including this one.
+                            case "#pattern": // Alternate command added in beatoraja
                                 int patern = int.Parse(split[1]) - 1;
 
                                 AnimeCollection[patern].Pattern = new int[split[2].Length / 2];
@@ -412,7 +403,7 @@ namespace CHPEditor
                                     for (int i = 0; i < RectCollection.Length; i++)
                                         RectCollection[i] = new Rectangle<int>(0,0,0,0);
                                 }
-                                if (!parseAsHex && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
+                                if (IsLegacy && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
                                 {
                                     if (split.Length >= 2 && int.TryParse(split[1], out int x))
                                         RectCollection[number].Origin.X = x;
@@ -425,7 +416,7 @@ namespace CHPEditor
                                 }
                                 else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
                                 {
-                                    if (!parseAsHex)
+                                    if (IsLegacy)
                                     {
                                         Rectangle<int>[] newRect = new Rectangle<int>[Data * Data];
                                         for (int i = 0; i < RectCollection.Length; i++)
@@ -434,7 +425,7 @@ namespace CHPEditor
                                                 newRect[int.Parse(i.ToString(), NumberStyles.HexNumber)] = RectCollection[i];
                                         }
                                         RectCollection = newRect;
-                                        parseAsHex = true;
+                                        IsLegacy = false;
                                     }
 
                                     if (split.Length >= 2 && int.TryParse(split[1], out int x))
@@ -482,7 +473,7 @@ namespace CHPEditor
                             "Frame Counts: " + (string.Join(",", all_lengths.Select(len => len.ToString()).ToArray())));
                 }
                 Loaded = true;
-                Trace.TraceInformation("Pomyu Chara loaded!");
+                Trace.TraceInformation("Pomyu Chara loaded! (Legacy: " + IsLegacy + ")");
                 Trace.TraceInformation("File Name: " + FileName);
                 Trace.TraceInformation("Chara Name: " + CharName);
                 Trace.TraceInformation("Artist: " + Artist);
