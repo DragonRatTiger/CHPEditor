@@ -32,11 +32,13 @@ namespace CHPEditor
         }
         public Encoding FileEncoding { get; private set; }
 
-        public int Anime = 83;
-        public int[] Size = [121, 271];
+        public int Anime = 83; // I don't remember where I got this number from, but I assume it's the correct one. Doesn't look off to me.
+        public int[] Size = [121, 271]; // Begin with 121,271 for legacy support. Modern pomyus are typically 167,271.
         public int Wait = 1;
         public int Data = 16; // Required for hexadecimal conversion
         public bool AutoColorSet = false;
+        public Rectangle<int> CharFaceUpperSize = new Rectangle<int>(0, 0, 256, 256);
+        public Rectangle<int> CharFaceAllSize = new Rectangle<int>(320, 0, 320, 480);
 
         public bool IsLegacy { get; private set; } = true;
 
@@ -168,9 +170,14 @@ namespace CHPEditor
 
                             case "#selectcg":
                                 string cgfile = SquashArray(split, 2)[1];
-                                string cgfile2 = cgfile.Replace("1p", "2p");
 
                                 LoadTexture(ref SelectCG, cgfile, 0);
+                                break;
+
+                            case "#selectcg2p": // Beatoraja exclusive command
+                                string cgfile2 = SquashArray(split, 2)[1];
+
+                                LoadTexture(ref SelectCG2P, cgfile2, 0);
                                 break;
 
                             case "#chartex":
@@ -188,23 +195,47 @@ namespace CHPEditor
 
                             case "#anime":
                                 if (!int.TryParse(split[1], out Anime))
-                                    Trace.TraceError("Failed to parse Anime value. Did you write it correctly?");
+                                    Trace.TraceError($"Failed to parse Anime value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
                                 break;
 
                             case "#size":
-                                if (!int.TryParse(split[1], out Size[0]) || !int.TryParse(split[2], out Size[1]))
-                                    Trace.TraceError("Failed to parse Size value. Did you write it correctly?");
+                                if (!int.TryParse(split[1], out Size[0]))
+                                    Trace.TraceError($"Failed to parse Size width value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
+                                if (!int.TryParse(split[2], out Size[1]))
+                                    Trace.TraceError($"Failed to parse Size height value. \"{split[2]}\" was not recognized as an integer. Did you write it correctly?");
                                 break;
 
                             case "#wait":
                                 if (!int.TryParse(split[1], out Wait))
-                                    Trace.TraceError("Failed to parse Wait value. Did you write it correctly?");
+                                    Trace.TraceError($"Failed to parse Wait value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
                                 break;
 
                             case "#data":
                                 if (!int.TryParse(split[1], out Data))
-                                    Trace.TraceError("Failed to parse Data value. Did you write it correctly?");
+                                    Trace.TraceError($"Failed to parse Data value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
                                 IsLegacy = false;
+                                break;
+                            case "#charfaceallsize": // Beatoraja exclusive command
+                                if (split.Length >= 5)
+                                {
+                                    CharFaceAllSize.Origin.X = int.TryParse(split[1], out int x) ? x : CharFaceAllSize.Origin.X;
+                                    CharFaceAllSize.Origin.Y = int.TryParse(split[2], out int y) ? y : CharFaceAllSize.Origin.Y;
+                                    CharFaceAllSize.Size.X = int.TryParse(split[3], out int w) ? w : CharFaceAllSize.Size.X;
+                                    CharFaceAllSize.Size.Y = int.TryParse(split[4], out int h) ? h : CharFaceAllSize.Size.Y;
+                                }
+                                else
+                                    Trace.TraceWarning($"#CharFaceAllSize could not be parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
+                                break;
+                            case "#charfaceuppersize": // Beatoraja exclusive command
+                                if (split.Length >= 5)
+                                {
+                                    CharFaceUpperSize.Origin.X = int.TryParse(split[1], out int x) ? x : CharFaceUpperSize.Origin.X;
+                                    CharFaceUpperSize.Origin.Y = int.TryParse(split[2], out int y) ? y : CharFaceUpperSize.Origin.Y;
+                                    CharFaceUpperSize.Size.X = int.TryParse(split[3], out int w) ? w : CharFaceUpperSize.Size.X;
+                                    CharFaceUpperSize.Size.Y = int.TryParse(split[4], out int h) ? h : CharFaceUpperSize.Size.Y;
+                                }
+                                else
+                                    Trace.TraceWarning($"#CharFaceUpperSize could not be parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
                                 break;
                             #endregion
                             #region Animation
