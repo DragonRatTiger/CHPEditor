@@ -514,7 +514,7 @@ void main()
                                 }
                             }
 
-                            if (!isInterpole[1])
+                            if (!isInterpole[1] && texture[framecap][1] >= 0)
                             {
                                 int dstdata = texture[framecap][1];
                                 texdst = new Rectangle<int>(
@@ -522,6 +522,10 @@ void main()
                                     chpfile.RectCollection[dstdata].Origin.Y + anchor_y,
                                     chpfile.RectCollection[dstdata].Size.X,
                                     chpfile.RectCollection[dstdata].Size.Y );
+                            }
+                            else if (!isInterpole[1])
+                            {
+                                texdst = new Rectangle<int>(anchor_x, anchor_y, chpfile.Size[0], chpfile.Size[1]);
                             }
                             if (!isInterpole[2])
                             {
@@ -591,6 +595,10 @@ void main()
                             {
                                 int dstdata = layer[framecap][1];
                                 laydst = new Rectangle<int> ( chpfile.RectCollection[dstdata].Origin.X + anchor_x, chpfile.RectCollection[dstdata].Origin.Y + anchor_y, chpfile.RectCollection[dstdata].Size.X, chpfile.RectCollection[dstdata].Size.Y );
+                            }
+                            else if (!isInterpole)
+                            {
+                                laydst = new Rectangle<int> ( anchor_x, anchor_y, chpfile.Size[0], chpfile.Size[1] );
                             }
 
                             int srcdata = layer[framecap][0];

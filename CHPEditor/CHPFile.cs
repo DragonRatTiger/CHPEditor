@@ -279,7 +279,7 @@ namespace CHPEditor
 
                                 for (int i = 0; i < AnimeCollection[texture].Texture.Last().Length; i++)
                                 {
-                                    AnimeCollection[texture].Texture.Last()[i] = new int[4] { 0, 0, 255, 0 };
+                                    AnimeCollection[texture].Texture.Last()[i] = new int[4] { 0, -1, 255, 0 };
 
                                     for (int j = 0; j < 4; j++)
                                         if (j + 2 < split.Length)
@@ -362,8 +362,8 @@ namespace CHPEditor
 
                                 for (int i = 0; i < AnimeCollection[layer].Layer.Last().Length; i++)
                                 {
-                                    AnimeCollection[layer].Layer.Last()[i] = new int[2] { 0, 0 };
-                                    for (int j = 0; j < 2; j++)
+                                    AnimeCollection[layer].Layer.Last()[i] = new int[2] { 0, -1 };
+                                    for (int j = 0; j < 2 && j < split.Length - 2; j++)
                                         if (int.TryParse(split[j + 2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
                                         {
                                             AnimeCollection[layer].Layer.Last()[i][j] = result;
