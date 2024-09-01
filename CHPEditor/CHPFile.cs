@@ -281,7 +281,7 @@ namespace CHPEditor
                                 {
                                     AnimeCollection[texture].Texture.Last()[i] = new int[4] { 0, -1, 255, 0 };
 
-                                    for (int j = 0; j < 4; j++)
+                                    for (int j = 0; j < 4 && j < split.Length - 2; j++)
                                         if (j + 2 < split.Length)
                                         {
                                             if (int.TryParse(split[j + 2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
