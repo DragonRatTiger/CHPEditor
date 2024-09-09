@@ -10,6 +10,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using System.Text;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace CHPEditor
 {
@@ -330,7 +331,7 @@ void main()
                 }
             else
             {
-                RenderAnimation(ref ChpFile);
+                RenderAnimation();
             }
 
             ImGuiManager.Draw();
@@ -370,10 +371,10 @@ void main()
                 }
             }
         }
-        static void RenderAnimation(ref CHPFile chpfile)
+        static void RenderAnimation()
         {
-            if (chpfile.Loaded)
-                if (chpfile.AnimeCollection[anishow - 1].Loaded)
+            if (ChpFile.Loaded)
+                if (ChpFile.AnimeCollection[anishow - 1].Loaded)
                 {
                     int state = anishow - 1;
                     anistate = anishow;
@@ -409,243 +410,295 @@ void main()
                     }
                     #endregion
 
-                    int anchor_x = (_window.FramebufferSize.X / 2) - (chpfile.Size[0] / 2);
-                    int anchor_y = (_window.FramebufferSize.Y / 2) - (chpfile.Size[1] / 2);
+                    int anchor_x = (_window.FramebufferSize.X / 2) - (ChpFile.Size.Width / 2);
+                    int anchor_y = (_window.FramebufferSize.Y / 2) - (ChpFile.Size.Height / 2);
 
-                    Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(chpfile.Size[0], chpfile.Size[1]) };
-                    Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(chpfile.Size[0], chpfile.Size[1]) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
-                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(chpfile.RectCollection[0].Size.X, chpfile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
+                    Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) };
+                    Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
+                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(ChpFile.RectCollection[0].Size.X, ChpFile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
 
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
                     {
-                        if (use2P && chpfile.CharBMP2P.Loaded)
+                        if (use2P && ChpFile.CharBMP2P.Loaded)
                         {
                             Draw(
-                                ref chpfile.CharBMP2P,
-                                chpfile.RectCollection[1],
+                                ref ChpFile.CharBMP2P,
+                                ChpFile.RectCollection[1],
                                 bgdst);
                             Draw(
-                                ref chpfile.CharBMP2P,
-                                chpfile.RectCollection[0],
+                                ref ChpFile.CharBMP2P,
+                                ChpFile.RectCollection[0],
                                 namedst);
                         }
                         else
                         {
                             Draw(
-                                ref chpfile.CharBMP,
-                                chpfile.RectCollection[1],
+                                ref ChpFile.CharBMP,
+                                ChpFile.RectCollection[1],
                                 bgdst);
                             Draw(
-                                ref chpfile.CharBMP,
-                                chpfile.RectCollection[0],
+                                ref ChpFile.CharBMP,
+                                ChpFile.RectCollection[0],
                                 namedst);
                         }
                     }
 
-                    if (chpfile.AnimeCollection[state].Pattern != null && !hidePat)
+                    // Pattern
+                    for (int i = 0; i < ChpFile.AnimeCollection[state].Pattern.Count; i++)
                     {
-                        int framecap = Math.Clamp(currentframe, 0, chpfile.AnimeCollection[state].Pattern.Length - 1);
-                        int data = chpfile.AnimeCollection[state].Pattern[framecap];
-                        Rectangle<int> patdst = dst;
-                        patdst.Size.X = Math.Min(dst.Size.X, chpfile.RectCollection[data].Size.X);
-                        patdst.Size.Y = Math.Min(dst.Size.Y, chpfile.RectCollection[data].Size.Y);
+                        var pattern = ChpFile.AnimeCollection[state].Pattern[i];
+                        var inter = ChpFile.InterpolateCollection[state].Pattern[i];
+                        int framecap = Math.Clamp(currentframe, 0, pattern.Sprite.Length - 1);
 
-                        if (use2P && chpfile.CharBMP2P.Loaded)
-                            Draw(
-                                ref chpfile.CharBMP2P,
-                                chpfile.RectCollection[data],
-                                patdst);
+                        int spriteindex = pattern.Sprite[framecap];
+                        int offsetindex = framecap < pattern.Offset.Length ? pattern.Offset[framecap] : -1;
+                        bool[] isInterpole = [false, false];
+
+                        #region Set Rects
+                        Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
+                        Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
+
+                        for (int j = 0; j < inter.Sprite.Length; j++)
+                        {
+                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[0] = true;
+                            }
+                        }
+
+                        for (int j = 0; j < inter.Offset.Length; j++)
+                        {
+                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[1] = true;
+                            }
+                        }
+
+                        if (!isInterpole[0])
+                            sprite = spriteindex != -1 ? 
+                                ChpFile.RectCollection[spriteindex] : sprite;
+                        if (!isInterpole[1])
+                            offset = offsetindex != -1 ?
+                                ChpFile.RectCollection[offsetindex] : new Rectangle<int>(0,0,ChpFile.Size.Width,ChpFile.Size.Height);
+
+                        offset.Origin.X += anchor_x;
+                        offset.Origin.Y += anchor_y;
+                        #endregion
+
+                        #region Crop
+                        Rectangle<int> crop_amount = new Rectangle<int>()
+                        {
+                            Origin = new Vector2D<int>()
+                            {
+                                X = offset.Origin.X - Math.Clamp(offset.Origin.X, dst.Origin.X, dst.Max.X),
+                                Y = offset.Origin.Y - Math.Clamp(offset.Origin.Y, dst.Origin.Y, dst.Max.Y)
+                            },
+                            Size = new Vector2D<int>()
+                            {
+                                X = offset.Max.X - Math.Clamp(offset.Max.X, dst.Origin.X, dst.Max.X),
+                                Y = offset.Max.Y - Math.Clamp(offset.Max.Y, dst.Origin.Y, dst.Max.Y)
+                            }
+                        };
+
+                        Rectangle<int> crop_rect = sprite;
+                        Rectangle<int> crop_dst = offset;
+
+                        // Layer can not cross its size boundaries, so anything extra must be cropped out
+                        crop_rect.Origin.X -= crop_amount.Origin.X;
+                        crop_rect.Origin.Y -= crop_amount.Origin.Y;
+                        crop_rect.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                        crop_rect.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                        crop_dst.Origin.X -= crop_amount.Origin.X;
+                        crop_dst.Origin.Y -= crop_amount.Origin.Y;
+                        crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                        crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                        // Quick fix
+                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
+                            crop_dst.Size = new Vector2D<int>(0, 0);
+                        #endregion
+
+                        if (use2P && ChpFile.CharBMP2P.Loaded)
+                            Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
                         else
-                            Draw(
-                                ref chpfile.CharBMP,
-                                chpfile.RectCollection[data],
-                                patdst);
+                            Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
                     }
-                    if (chpfile.AnimeCollection[state].Texture != null)
+                    // Texture
+                    for (int i = 0; i < ChpFile.AnimeCollection[state].Texture.Count; i++)
                     {
-                        for (int i = 0; i < chpfile.AnimeCollection[state].Texture.Count - hideTexCount; i++)
+                        var texture = ChpFile.AnimeCollection[state].Texture[i];
+                        var inter = ChpFile.InterpolateCollection[state].Texture[i];
+                        int framecap = Math.Clamp(currentframe, 0, texture.Sprite.Length - 1);
+
+                        int spriteindex = framecap < texture.Sprite.Length ? texture.Sprite[framecap] : -1;
+                        int offsetindex = framecap < texture.Offset.Length ? texture.Offset[framecap] : -1;
+                        int alphaindex = framecap < texture.Alpha.Length ? texture.Alpha[framecap] : -1;
+                        int rotationindex = framecap < texture.Rotation.Length ? texture.Rotation[framecap] : -1;
+
+                        bool[] isInterpole = [false, false, false, false];
+
+                        #region Set Rects/Ints
+                        Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
+                        Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
+                        float alpha = 1.0f;
+                        float rotation = 0.0f;
+
+                        for (int j = 0; j < inter.Sprite.Length; j++)
                         {
-                            int[][] texture = chpfile.AnimeCollection[state].Texture[i];
-                            int[][][] inter = chpfile.InterpolateCollection[state].Texture[i];
-                            int framecap = Math.Clamp(currentframe, 0, texture.Length - 1);
-
-                            int srcdata = texture[framecap][0];
-                            byte alpha = 0xFF;
-                            double rot = 0;
-                            Rectangle<int> texdst = new Rectangle<int>();
-
-                            bool[] isInterpole = new bool[4];
-
-                            for (int j = 0; j < inter.Length; j++)
+                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
                             {
-                                if (inter[j] != null)
-                                {
-                                    for (int k = 0; k < inter[j].Length; k++)
-                                    {
-                                        if (currenttime >= inter[j][k][0] && currenttime <= (inter[j][k][1] + inter[j][k][0]))
-                                        {
-                                            double progress = (double)(currenttime - inter[j][k][0]) / (double)inter[j][k][1];
-                                            switch (j)
-                                            {
-                                                case 1:
-                                                    texdst = new Rectangle<int>
-                                                    (
-                                                        (int)(chpfile.RectCollection[inter[j][k][2]].Origin.X + anchor_x + ((chpfile.RectCollection[inter[j][k][3]].Origin.X - chpfile.RectCollection[inter[j][k][2]].Origin.X) * progress)),
-                                                        (int)(chpfile.RectCollection[inter[j][k][2]].Origin.Y + anchor_y + ((chpfile.RectCollection[inter[j][k][3]].Origin.Y - chpfile.RectCollection[inter[j][k][2]].Origin.Y) * progress)),
-                                                        (int)(chpfile.RectCollection[inter[j][k][2]].Size.X + ((chpfile.RectCollection[inter[j][k][3]].Size.X - chpfile.RectCollection[inter[j][k][2]].Size.X) * progress)),
-                                                        (int)(chpfile.RectCollection[inter[j][k][2]].Size.Y + ((chpfile.RectCollection[inter[j][k][3]].Size.Y - chpfile.RectCollection[inter[j][k][2]].Size.Y) * progress))
-                                                    );
-                                                    isInterpole[1] = true;
-                                                    break;
-                                                case 2:
-                                                    //alpha = (byte)(inter[2][k][2] + ((inter[2][k][3] - inter[2][k][2]) * progress * (Math.Pow(chpfile.Data, 2) / 256 /* In case a Data value of 16 isn't used */)));
-                                                    alpha = (byte)(inter[2][k][2] + ((inter[2][k][3] - inter[2][k][2]) * progress));
-                                                    isInterpole[2] = true;
-                                                    break;
-                                                case 3:
-                                                    //rot = ((inter[3][k][2] + ((inter[3][k][3] - inter[3][k][2]) * progress)) / Math.Pow(chpfile.Data, 2)) * 360d;
-                                                    rot = ((inter[3][k][2] + ((inter[3][k][3] - inter[3][k][2]) * progress)) / 256) * 360d;
-                                                    isInterpole[3] = true;
-                                                    break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (!isInterpole[1] && texture[framecap][1] >= 0)
-                            {
-                                int dstdata = texture[framecap][1];
-                                texdst = new Rectangle<int>(
-                                    chpfile.RectCollection[dstdata].Origin.X + anchor_x,
-                                    chpfile.RectCollection[dstdata].Origin.Y + anchor_y,
-                                    chpfile.RectCollection[dstdata].Size.X,
-                                    chpfile.RectCollection[dstdata].Size.Y );
-                            }
-                            else if (!isInterpole[1])
-                            {
-                                texdst = new Rectangle<int>(anchor_x, anchor_y, chpfile.Size[0], chpfile.Size[1]);
-                            }
-                            if (!isInterpole[2])
-                            {
-                                alpha = (byte)texture[framecap][2];
-                            }
-                            if (!isInterpole[3])
-                            {
-                                rot = (texture[framecap][3] / 256.0) * 360.0;
-                            }
-                            if (chpfile.RectCollection[srcdata].Size.X <= 0 || chpfile.RectCollection[srcdata].Size.X <= 0)
-                                texdst.Size = new Vector2D<int>(0, 0);
-
-                            if (use2P && chpfile.CharTex2P.Loaded)
-                            {
-                                Draw(
-                                    ref chpfile.CharTex2P,
-                                    chpfile.RectCollection[srcdata],
-                                    texdst,
-                                    rot,
-                                    (float)alpha / 255.0f);
-                            }
-                            else
-                            {
-                                Draw(
-                                    ref chpfile.CharTex,
-                                    chpfile.RectCollection[srcdata],
-                                    texdst,
-                                    rot,
-                                    (float)alpha / 255.0f);
+                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[0] = true;
                             }
                         }
-                    }
-                    if (chpfile.AnimeCollection[state].Layer != null)
-                    {
-                        for (int i = 0; i < chpfile.AnimeCollection[state].Layer.Count - hideLayCount; i++)
+
+                        for (int j = 0; j < inter.Offset.Length; j++)
                         {
-                            int[][] layer = chpfile.AnimeCollection[state].Layer[i];
-                            int[][][] inter = chpfile.InterpolateCollection[state].Layer[i];
-                            int framecap = Math.Clamp(currentframe, 0, layer.Length - 1);
-                            Rectangle<int> laydst = new Rectangle<int>();
-
-                            bool isInterpole = false;
-
-                            if (inter[1] != null)
+                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
                             {
-                                for (int j = 0; j < inter[1].Length; j++)
-                                {
-                                    if (inter[1][j] != null)
-                                    {
-                                        if (currenttime >= inter[1][j][0] && currenttime <= (inter[1][j][1] + inter[1][j][0]))
-                                        {
-                                            double progress = (double)(currenttime - inter[1][j][0]) / (double)inter[1][j][1];
-                                            laydst = new Rectangle<int>
-                                            (
-                                                (int)(chpfile.RectCollection[inter[1][j][2]].Origin.X + anchor_x + ((chpfile.RectCollection[inter[1][j][3]].Origin.X - chpfile.RectCollection[inter[1][j][2]].Origin.X) * progress)),
-                                                (int)(chpfile.RectCollection[inter[1][j][2]].Origin.Y + anchor_y + ((chpfile.RectCollection[inter[1][j][3]].Origin.Y - chpfile.RectCollection[inter[1][j][2]].Origin.Y) * progress)),
-                                                (int)(chpfile.RectCollection[inter[1][j][2]].Size.X + ((chpfile.RectCollection[inter[1][j][3]].Size.X - chpfile.RectCollection[inter[1][j][2]].Size.X) * progress)),
-                                                (int)(chpfile.RectCollection[inter[1][j][2]].Size.Y + ((chpfile.RectCollection[inter[1][j][3]].Size.Y - chpfile.RectCollection[inter[1][j][2]].Size.Y) * progress))
-                                            );
-                                            isInterpole = true;
-                                        }
-                                    }
-                                }
+                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[1] = true;
                             }
-
-                            if (!isInterpole && layer[framecap][1] >= 0)
-                            {
-                                int dstdata = layer[framecap][1];
-                                laydst = new Rectangle<int> ( chpfile.RectCollection[dstdata].Origin.X + anchor_x, chpfile.RectCollection[dstdata].Origin.Y + anchor_y, chpfile.RectCollection[dstdata].Size.X, chpfile.RectCollection[dstdata].Size.Y );
-                            }
-                            else if (!isInterpole)
-                            {
-                                laydst = new Rectangle<int> ( anchor_x, anchor_y, chpfile.Size[0], chpfile.Size[1] );
-                            }
-
-                            int srcdata = layer[framecap][0];
-
-                            Rectangle<int> crop_amount = new Rectangle<int>()
-                            {
-                                Origin = new Vector2D<int>()
-                                {
-                                    X = laydst.Origin.X - Math.Clamp(laydst.Origin.X, dst.Origin.X, dst.Max.X),
-                                    Y = laydst.Origin.Y - Math.Clamp(laydst.Origin.Y, dst.Origin.Y, dst.Max.Y)
-                                },
-                                Size = new Vector2D<int>()
-                                {
-                                    X = laydst.Max.X - Math.Clamp(laydst.Max.X, dst.Origin.X, dst.Max.X),
-                                    Y = laydst.Max.Y - Math.Clamp(laydst.Max.Y, dst.Origin.Y, dst.Max.Y),
-                                }
-                            };
-
-                            Rectangle<int> crop_rect = chpfile.RectCollection[srcdata];
-                            Rectangle<int> crop_dst = laydst;
-
-                            // Layer can not cross its size boundaries, so anything extra must be cropped out
-                            crop_rect.Origin.X -= crop_amount.Origin.X;
-                            crop_rect.Origin.Y -= crop_amount.Origin.Y;
-                            crop_rect.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
-                            crop_rect.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
-
-                            crop_dst.Origin.X -= crop_amount.Origin.X;
-                            crop_dst.Origin.Y -= crop_amount.Origin.Y;
-                            crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
-                            crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
-
-                            // Quick fix
-                            if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
-                                crop_dst.Size = new Vector2D<int>(0, 0);
-
-                            if (use2P && chpfile.CharBMP2P.Loaded)
-                                Draw(
-                                ref chpfile.CharBMP2P,
-                                crop_rect,
-                                crop_dst);
-                            else
-                                Draw(
-                                ref chpfile.CharBMP,
-                                crop_rect,
-                                crop_dst);
                         }
+
+                        for (int j = 0; j < inter.Alpha.Length; j++)
+                        {
+                            if (inter.Alpha[j].Start <= currenttime && inter.Alpha[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Alpha[j].Start) / (double)inter.Alpha[j].Length;
+                                var diff = inter.Alpha[j].StartIndex + (int)((inter.Alpha[j].EndIndex - inter.Alpha[j].StartIndex) * progress);
+                                alpha = diff / 255.0f;
+                                isInterpole[2] = true;
+                            }
+                        }
+
+                        for (int j = 0; j < inter.Rotation.Length; j++)
+                        {
+                            if (inter.Rotation[j].Start <= currenttime && inter.Rotation[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Rotation[j].Start) / (double)inter.Rotation[j].Length;
+                                var diff = inter.Rotation[j].StartIndex + (int)((inter.Rotation[j].EndIndex - inter.Rotation[j].StartIndex) * progress);
+                                rotation = (diff / 255.0f) * 360.0f;
+                                isInterpole[3] = true;
+                            }
+                        }
+
+                        if (!isInterpole[0] && spriteindex != -1)
+                            sprite = ChpFile.RectCollection[spriteindex];
+                        if (!isInterpole[1] && offsetindex != -1)
+                            offset = ChpFile.RectCollection[offsetindex];
+                        if (!isInterpole[2] && alphaindex != -1)
+                            alpha = alphaindex / 255.0f;
+                        if (!isInterpole[3] && rotationindex != -1)
+                            rotation = (rotationindex / 255.0f) * 360.0f;
+
+                        offset.Origin.X += anchor_x;
+                        offset.Origin.Y += anchor_y;
+                        #endregion
+
+                        if (use2P && ChpFile.CharTex2P.Loaded)
+                            Draw(ref ChpFile.CharTex2P, sprite, offset, (double)rotation, alpha);
+                        else
+                            Draw(ref ChpFile.CharTex, sprite, offset, (double)rotation, alpha);
+                    }
+                    // Layer
+                    for (int i = 0; i < ChpFile.AnimeCollection[state].Layer.Count; i++)
+                    {
+                        var layer = ChpFile.AnimeCollection[state].Layer[i];
+                        var inter = ChpFile.InterpolateCollection[state].Layer[i];
+                        int framecap = Math.Clamp(currentframe, 0, layer.Sprite.Length - 1);
+
+                        int spriteindex = layer.Sprite[framecap];
+                        int offsetindex = framecap < layer.Offset.Length ? layer.Offset[framecap] : -1;
+                        bool[] isInterpole = [false, false];
+
+                        #region Set Rects
+                        Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
+                        Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
+
+                        for (int j = 0; j < inter.Sprite.Length; j++)
+                        {
+                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[0] = true;
+                            }
+                        }
+
+                        for (int j = 0; j < inter.Offset.Length; j++)
+                        {
+                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
+                            {
+                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isInterpole[1] = true;
+                            }
+                        }
+
+                        if (!isInterpole[0])
+                            sprite = spriteindex != -1 ?
+                                ChpFile.RectCollection[spriteindex] : sprite;
+                        if (!isInterpole[1])
+                            offset = offsetindex != -1 ?
+                                ChpFile.RectCollection[offsetindex] : new Rectangle<int>(0, 0, sprite.Size.X, sprite.Size.Y);
+
+                        offset.Origin.X += anchor_x;
+                        offset.Origin.Y += anchor_y;
+                        #endregion
+
+                        #region Crop
+                        Rectangle<int> crop_amount = new Rectangle<int>()
+                        {
+                            Origin = new Vector2D<int>()
+                            {
+                                X = offset.Origin.X - Math.Clamp(offset.Origin.X, dst.Origin.X, dst.Max.X),
+                                Y = offset.Origin.Y - Math.Clamp(offset.Origin.Y, dst.Origin.Y, dst.Max.Y)
+                            },
+                            Size = new Vector2D<int>()
+                            {
+                                X = offset.Max.X - Math.Clamp(offset.Max.X, dst.Origin.X, dst.Max.X),
+                                Y = offset.Max.Y - Math.Clamp(offset.Max.Y, dst.Origin.Y, dst.Max.Y)
+                            }
+                        };
+
+                        Rectangle<int> crop_rect = sprite;
+                        Rectangle<int> crop_dst = offset;
+
+                        // Layer can not cross its size boundaries, so anything extra must be cropped out
+                        crop_rect.Origin.X -= crop_amount.Origin.X;
+                        crop_rect.Origin.Y -= crop_amount.Origin.Y;
+                        crop_rect.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                        crop_rect.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                        crop_dst.Origin.X -= crop_amount.Origin.X;
+                        crop_dst.Origin.Y -= crop_amount.Origin.Y;
+                        crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
+                        crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
+
+                        // Quick fix
+                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
+                            crop_dst.Size = new Vector2D<int>(0, 0);
+                        #endregion
+
+                        if (use2P && ChpFile.CharBMP2P.Loaded)
+                            Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
+                        else
+                            Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
                     }
                 }
                 else if (anishow != anistate)

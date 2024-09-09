@@ -32,30 +32,94 @@ namespace CHPEditor
         }
         public Encoding FileEncoding { get; private set; }
 
-        public int Anime = 83; // I don't remember where I got this number from, but I assume it's the correct one. Doesn't look off to me.
-        public int[] Size = [121, 271]; // Begin with 121,271 for legacy support. Modern pomyus are typically 167,271.
-        public int Wait = 1;
-        public int Data = 16; // Required for hexadecimal conversion
+        public int Anime = 83; // Took a guess for this one, since some charas don't have #Anime defined. Need to look a bit more into this. (It's 12fps rounded down)
+        public Size Size = new Size(121, 271); // Begin with 121,271 for legacy support. Modern pomyus are typically 167,271.
+        public int Wait = 1; // # of times to repeat idle animation before playing other animations
+        public int Data = 10; // Required for hexadecimal conversion. Defaulted to 10 for legacy pomyu support.
         public bool AutoColorSet = false;
         public Rectangle<int> CharFaceUpperSize = new Rectangle<int>(0, 0, 256, 256);
         public Rectangle<int> CharFaceAllSize = new Rectangle<int>(320, 0, 320, 480);
 
+        /// <summary>
+        /// Legacy characters have slightly different behavior from modern characters.<br/>
+        /// Data-wise, legacy pomyus only use up to 100 rects, and always use color keying regardless if <c>#AutoColorSet</c> is found.<br/>
+        /// This is set to false when <c>#Data</c> is found in a CHP file during parsing.
+        /// </summary>
         public bool IsLegacy { get; private set; } = true;
 
         public struct AnimeData
         {
+            public struct PatternData
+            {
+                public PatternData() { Sprite = []; Offset = []; }
+                /// <summary>
+                /// The index pointing to which sprite to display.
+                /// </summary>
+                public int[] Sprite;
+                /// <summary>
+                /// The index pointing to which offset/scale to use for the sprite.
+                /// </summary>
+                public int[] Offset;
+            }
+            public struct TextureData
+            {
+                public TextureData() { Sprite = []; Offset = []; Alpha = []; Rotation = []; }
+                /// <summary>
+                /// The index pointing to which sprite to display.
+                /// </summary>
+                public int[] Sprite;
+                /// <summary>
+                /// The index pointing to which offset/scale to use for the sprite.
+                /// </summary>
+                public int[] Offset;
+                /// <summary>
+                /// The transparency of the sprite being displayed.
+                /// </summary>
+                public int[] Alpha;
+                /// <summary>
+                /// The angle of the sprite being displayed, written in byte format, and then calculated to get the closest matching angle in degrees.
+                /// </summary>
+                public int[] Rotation;
+            }
+
             public bool Loaded;
             public int Frame;
             public int FrameCount;
             public int Loop;
-            public int[] Pattern;
-            public List<int[][]> Layer;
-            public List<int[][]> Texture;
+            public List<PatternData> Pattern;
+            public List<TextureData> Texture;
+            public List<PatternData> Layer;
         }
-        public struct InterpolateData // type -> key -> interarray: start, length, startpos, endpos
+        public struct InterpolateData
         {
-            public List<int[][][]> Layer;
-            public List<int[][][]> Texture;
+            public struct InterpolateKey
+            {
+                public int Start;
+                public int Length;
+                public int End { get { return Start + Length; } }
+                public int StartIndex;
+                public int EndIndex;
+            }
+            public struct PatternData
+            {
+                public PatternData() { Sprite = []; Offset = []; }
+
+                public InterpolateKey[] Sprite;
+                public InterpolateKey[] Offset;
+            }
+            public struct TextureData
+            {
+                public TextureData() { Sprite = []; Offset = []; Alpha = []; Rotation = []; }
+
+                public InterpolateKey[] Sprite;
+                public InterpolateKey[] Offset;
+                public InterpolateKey[] Alpha;
+                public InterpolateKey[] Rotation;
+            }
+
+            public List<PatternData> Pattern;
+            public List<TextureData> Texture;
+            public List<PatternData> Layer;
         }
         public struct BitmapData
         {
@@ -104,6 +168,7 @@ namespace CHPEditor
             CharTex2P;
 
         public Rectangle<int>[] RectCollection;
+        public string[] RectComments;
 
         public AnimeData[] AnimeCollection { get; protected set; }
         public InterpolateData[] InterpolateCollection { get; protected set; }
@@ -111,6 +176,8 @@ namespace CHPEditor
         {
             Loaded = false;
             Error = "";
+
+            int linecount = 1;
 
             try
             {
@@ -122,27 +189,38 @@ namespace CHPEditor
 
                 AnimeCollection = new AnimeData[18];
                 InterpolateCollection = new InterpolateData[18];
+                for (int i = 0; i < 18; i++)
+                {
+                    AnimeCollection[i].Pattern = new List<AnimeData.PatternData>();
+                    AnimeCollection[i].Texture = new List<AnimeData.TextureData>();
+                    AnimeCollection[i].Layer = new List<AnimeData.PatternData>();
+                    InterpolateCollection[i].Pattern = new List<InterpolateData.PatternData>();
+                    InterpolateCollection[i].Texture = new List<InterpolateData.TextureData>();
+                    InterpolateCollection[i].Layer = new List<InterpolateData.PatternData>();
+                }
 
                 filedata = filedata.Replace("\r\n", "\n");
                 string[] lines = filedata.Split("\n");
+
+
                 foreach (string line in lines)
                 {
-                    if (line.StartsWith("/") || line.StartsWith("//") || string.IsNullOrWhiteSpace(line))
-                        continue;
-                    else
+                    if (!(line.StartsWith("/") || line.StartsWith("//") || string.IsNullOrWhiteSpace(line)))
                     {
                         // parsing time :)
-                        string line_trimmed = line.Substring(0, line.IndexOf("//") > -1 ? line.IndexOf("//") : line.Length);
+                        bool containsComment = line.IndexOf("//") > -1;
+                        string line_trimmed = line.Substring(0, containsComment ? line.IndexOf("//") : line.Length);
                         string[] split = line_trimmed.Split(new char[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
                         switch (split[0].ToLower())
                         {
                             #region Chara name & artist
                             case "#charname":
-                                CharName = SquashArray(split, 2)[1];
+                                CharName = line_trimmed.Split(new char[] { '\t', ' ' }, 2, StringSplitOptions.RemoveEmptyEntries)[1];
                                 break;
 
                             case "#artist":
-                                Artist = SquashArray(split, 2)[1];
+                                Artist = line_trimmed.Split(new char[] { '\t', ' ' }, 2, StringSplitOptions.RemoveEmptyEntries)[1];
                                 break;
                             #endregion
                             #region Bitmaps
@@ -163,15 +241,11 @@ namespace CHPEditor
                                 break;
 
                             case "#selectcg":
-                                string cgfile = SquashArray(split, 2)[1];
-
-                                LoadTexture(ref SelectCG, cgfile, 0);
+                                LoadTexture(ref SelectCG, SquashArray(split, 2)[1], ColorKeyType.None);
                                 break;
 
                             case "#selectcg2p": // Added in beatoraja
-                                string cgfile2 = SquashArray(split, 2)[1];
-
-                                LoadTexture(ref SelectCG2P, cgfile2, 0);
+                                LoadTexture(ref SelectCG2P, SquashArray(split, 2)[1], ColorKeyType.None);
                                 break;
 
                             case "#chartex":
@@ -193,10 +267,18 @@ namespace CHPEditor
                                 break;
 
                             case "#size":
-                                if (!int.TryParse(split[1], out Size[0]))
-                                    Trace.TraceError($"Failed to parse Size width value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
-                                if (!int.TryParse(split[2], out Size[1]))
-                                    Trace.TraceError($"Failed to parse Size height value. \"{split[2]}\" was not recognized as an integer. Did you write it correctly?");
+                                if (split.Length >= 2)
+                                {
+                                    if (int.TryParse(split[1], out int size_x)) { Size.Width = size_x; }
+                                    else Trace.TraceError($"Failed to parse Size width value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
+                                }
+                                else { Trace.TraceError("Attempted to find the character's width when reading #Size, but no value was found."); }
+                                if (split.Length >= 3)
+                                {
+                                    if (int.TryParse(split[2], out int size_y)) { Size.Height = size_y; }
+                                    else Trace.TraceError($"Failed to parse Size height value. \"{split[2]}\" was not recognized as an integer. Did you write it correctly?");
+                                }
+                                else { Trace.TraceError("Attempted to find the character's height when reading #Size, but no value was found."); }
                                 break;
 
                             case "#wait":
@@ -219,7 +301,7 @@ namespace CHPEditor
                                     CharFaceAllSize.Size.Y = int.TryParse(split[4], out int h) ? h : CharFaceAllSize.Size.Y;
                                 }
                                 else
-                                    Trace.TraceWarning($"#CharFaceAllSize could not be parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
+                                    Trace.TraceWarning($"#CharFaceAllSize could not be properly parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
                                 break;
                             
                             case "#charfaceuppersize": // Added in beatoraja
@@ -231,7 +313,7 @@ namespace CHPEditor
                                     CharFaceUpperSize.Size.Y = int.TryParse(split[4], out int h) ? h : CharFaceUpperSize.Size.Y;
                                 }
                                 else
-                                    Trace.TraceWarning($"#CharFaceUpperSize could not be parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
+                                    Trace.TraceWarning($"#CharFaceUpperSize could not be properly parsed. Found {split.Length - 1} values instead of 4. Using default values instead.");
                                 break;
                             #endregion
                             #region Animation
@@ -249,176 +331,86 @@ namespace CHPEditor
 
                             case "#patern": // This is also the correct command, but was once again misspelled.
                             case "#pattern": // Added in beatoraja
+
+                                if (split.Length < 3)
+                                {
+                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    break;
+                                }
+
                                 int patern = int.Parse(split[1]) - 1;
+                                int frame = AnimeCollection[patern].Frame > 0 ? AnimeCollection[patern].Frame : Anime;
 
-                                AnimeCollection[patern].Pattern = new int[split[2].Length / 2];
-                                for (int i = 0; i < AnimeCollection[patern].Pattern.Length; i++)
-                                    if (int.TryParse(split[2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
-                                        AnimeCollection[patern].Pattern[i] = result;
-                                    else
-                                        AnimeCollection[patern].Pattern[i] = -1; // Indicator of interpoling point
+                                AnimeCollection[patern].Pattern.Add(new AnimeData.PatternData() 
+                                { 
+                                    Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
+                                    Offset = split.Length >= 4 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : []
+                                } );
 
+                                InterpolateCollection[patern].Pattern.Add(new InterpolateData.PatternData() 
+                                {
+                                    Sprite = ParseFromInts(AnimeCollection[patern].Pattern.Last().Sprite, frame),
+                                    Offset = ParseFromInts(AnimeCollection[patern].Pattern.Last().Offset, frame)
+                                });
 
                                 AnimeCollection[patern].Loaded = true;
                                 break;
 
                             case "#texture":
+                                if (split.Length < 3)
+                                {
+                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    break;
+                                }
+                                //if (split.Length < 4)
+                                //{
+                                //    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes for offset. Offset is mandatory. Skipping this line.");
+                                //    break;
+                                //}
+
                                 int texture = int.Parse(split[1]) - 1;
+                                int texframe = AnimeCollection[texture].Frame > 0 ? AnimeCollection[texture].Frame : Anime;
 
-                                if (AnimeCollection[texture].Texture == null)
+                                AnimeCollection[texture].Texture.Add(new AnimeData.TextureData()
                                 {
-                                    AnimeCollection[texture].Texture = new List<int[][]>();
-                                    InterpolateCollection[texture].Texture = new List<int[][][]>();
-                                }
-                                AnimeCollection[texture].Texture.Add(new int[split[2].Length / 2][]);
-                                InterpolateCollection[texture].Texture.Add(new int[4][][]);
+                                    Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
+                                    Offset = split.Length > 3 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : [],
+                                    Alpha = split.Length > 4 ? ParseFromHexes(split[4]) : [],
+                                    Rotation = split.Length > 5 ? ParseFromHexes(split[5]) : []
+                                });
 
-                                for (int i = 0; i < AnimeCollection[texture].Texture.Last().Length; i++)
+                                InterpolateCollection[texture].Texture.Add(new InterpolateData.TextureData()
                                 {
-                                    AnimeCollection[texture].Texture.Last()[i] = new int[4] { 0, -1, 255, 0 };
-
-                                    for (int j = 0; j < 4 && j < split.Length - 2; j++)
-                                        if (j + 2 < split.Length)
-                                        {
-                                            if (int.TryParse(split[j + 2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
-                                            {
-                                                AnimeCollection[texture].Texture.Last()[i][j] = result;
-                                                #region Interpolate
-                                                if (i + 1 < AnimeCollection[texture].Texture.Last().Length)
-                                                {
-                                                    if (!int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
-                                                    {
-                                                        if (InterpolateCollection[texture].Texture.Last()[j] == null)
-                                                        {
-                                                            InterpolateCollection[texture].Texture.Last()[j] = new int[1][];
-                                                            InterpolateCollection[texture].Texture.Last()[j][0] = new int[4] {
-                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame * i : Anime * i,
-                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime,
-                                                                result,
-                                                                0
-                                                            };
-                                                        }
-                                                        else
-                                                        {
-                                                            Array.Resize(ref InterpolateCollection[texture].Texture.Last()[j], InterpolateCollection[texture].Texture.Last()[j].Length + 1);
-                                                            InterpolateCollection[texture].Texture.Last()[j][InterpolateCollection[texture].Texture.Last()[j].Length - 1] = new int[4] {
-                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame * i : Anime * i,
-                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime,
-                                                                result,
-                                                                0
-                                                            };
-                                                        }
-                                                    }
-                                                    else if (InterpolateCollection[texture].Texture.Last()[j] != null && i - 1 > 0)
-                                                    {
-                                                        if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
-                                                            InterpolateCollection[texture].Texture.Last()[j][InterpolateCollection[texture].Texture.Last()[j].Length - 1][1] +=
-                                                                AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime;
-                                                    }
-                                                }
-                                                else if (InterpolateCollection[texture].Texture.Last()[j] != null && i - 1 > 0)
-                                                {
-                                                    if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
-                                                        InterpolateCollection[texture].Texture.Last()[j][InterpolateCollection[texture].Texture.Last()[j].Length - 1][1] +=
-                                                            AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime;
-                                                }
-                                                #endregion
-                                            }
-                                            else
-                                            {
-                                                AnimeCollection[texture].Texture.Last()[i][j] = -1; // Indicator of interpoling point
-                                                #region Interpolate
-                                                InterpolateCollection[texture].Texture.Last()[j].Last()[1] += AnimeCollection[texture].Frame != 0 ? AnimeCollection[texture].Frame : Anime;
-                                                if (i + 1 < AnimeCollection[texture].Texture.Last().Length)
-                                                {
-                                                    if (int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
-                                                    {
-                                                        InterpolateCollection[texture].Texture.Last()[j].Last()[3] = interresult;
-                                                    }
-                                                }
-                                                #endregion
-                                            }
-                                        }
-
-                                }
+                                    Sprite = ParseFromInts(AnimeCollection[texture].Texture.Last().Sprite, texframe),
+                                    Offset = ParseFromInts(AnimeCollection[texture].Texture.Last().Offset, texframe),
+                                    Alpha = ParseFromInts(AnimeCollection[texture].Texture.Last().Alpha, texframe),
+                                    Rotation = ParseFromInts(AnimeCollection[texture].Texture.Last().Rotation, texframe)
+                                });
 
                                 AnimeCollection[texture].Loaded = true;
                                 break;
 
                             case "#layer":
+                                if (split.Length < 3)
+                                {
+                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    break;
+                                }
+
                                 int layer = int.Parse(split[1]) - 1;
+                                int layframe = AnimeCollection[layer].Frame > 0 ? AnimeCollection[layer].Frame : Anime;
 
-                                if (AnimeCollection[layer].Layer == null)
+                                AnimeCollection[layer].Layer.Add(new AnimeData.PatternData()
                                 {
-                                    AnimeCollection[layer].Layer = new List<int[][]>();
-                                    InterpolateCollection[layer].Layer = new List<int[][][]>();
-                                }
-                                AnimeCollection[layer].Layer.Add(new int[split[2].Length / 2][]);
-                                InterpolateCollection[layer].Layer.Add(new int[2][][]);
+                                    Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
+                                    Offset = split.Length > 3 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : []
+                                });
 
-                                for (int i = 0; i < AnimeCollection[layer].Layer.Last().Length; i++)
+                                InterpolateCollection[layer].Layer.Add(new InterpolateData.PatternData()
                                 {
-                                    AnimeCollection[layer].Layer.Last()[i] = new int[2] { 0, -1 };
-                                    for (int j = 0; j < 2 && j < split.Length - 2; j++)
-                                        if (int.TryParse(split[j + 2].Substring(i * 2, 2), NumberStyles.HexNumber, null, out int result))
-                                        {
-                                            AnimeCollection[layer].Layer.Last()[i][j] = result;
-                                            #region Interpolate
-                                            if (i + 1 < AnimeCollection[layer].Layer.Last().Length)
-                                            {
-                                                if (!int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
-                                                {
-                                                    if (InterpolateCollection[layer].Layer.Last()[j] == null)
-                                                    {
-                                                        InterpolateCollection[layer].Layer.Last()[j] = new int[1][];
-                                                        InterpolateCollection[layer].Layer.Last()[j][0] = new int[4] {
-                                                                AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame * i : Anime * i,
-                                                                AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime,
-                                                                result,
-                                                                0
-                                                            };
-                                                    }
-                                                    else
-                                                    {
-                                                        Array.Resize(ref InterpolateCollection[layer].Layer.Last()[j], InterpolateCollection[layer].Layer.Last()[j].Length + 1);
-                                                        InterpolateCollection[layer].Layer.Last()[j][InterpolateCollection[layer].Layer.Last()[j].Length - 1] = new int[4] {
-                                                                AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame * i : Anime * i,
-                                                                AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime,
-                                                                result,
-                                                                0
-                                                            };
-                                                    }
-                                                }
-                                                else if (InterpolateCollection[layer].Layer.Last()[j] != null && i - 1 > 0)
-                                                {
-                                                    if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
-                                                        InterpolateCollection[layer].Layer.Last()[j][InterpolateCollection[layer].Layer.Last()[j].Length - 1][1] +=
-                                                            AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime;
-                                                }
-                                            }
-                                            else if (InterpolateCollection[layer].Layer.Last()[j] != null && i - 1 > 0)
-                                            {
-                                                if (!int.TryParse(split[j + 2].Substring((i - 1) * 2, 2), NumberStyles.HexNumber, null, out int _))
-                                                    InterpolateCollection[layer].Layer.Last()[j][InterpolateCollection[layer].Layer.Last()[j].Length - 1][1] +=
-                                                        AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime;
-                                            }
-                                            #endregion
-                                        }
-                                        else
-                                        { 
-                                            AnimeCollection[layer].Layer.Last()[i][j] = -1; // Indicator of interpoling point
-                                            #region Interpolate
-                                            InterpolateCollection[layer].Layer.Last()[j].Last()[1] += AnimeCollection[layer].Frame != 0 ? AnimeCollection[layer].Frame : Anime;
-                                            if (i + 1 < AnimeCollection[layer].Layer.Last().Length)
-                                            {
-                                                if (int.TryParse(split[j + 2].Substring((i + 1) * 2, 2), NumberStyles.HexNumber, null, out int interresult))
-                                                {
-                                                    InterpolateCollection[layer].Layer.Last()[j].Last()[3] = interresult;
-                                                }
-                                            }
-                                            #endregion
-                                        }
-                                }
+                                    Sprite = ParseFromInts(AnimeCollection[layer].Layer.Last().Sprite, layframe),
+                                    Offset = ParseFromInts(AnimeCollection[layer].Layer.Last().Offset, layframe)
+                                });
 
                                 AnimeCollection[layer].Loaded = true;
                                 break;
@@ -427,68 +419,71 @@ namespace CHPEditor
                                 if (RectCollection == null)
                                 {
                                     RectCollection = new Rectangle<int>[Data * Data];
+                                    
                                     for (int i = 0; i < RectCollection.Length; i++)
                                         RectCollection[i] = new Rectangle<int>(0,0,0,0);
                                 }
+                                if (RectComments == null) { RectComments = new string[Data * Data]; }
+
                                 if (IsLegacy && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
                                 {
-                                    if (split.Length >= 2 && int.TryParse(split[1], out int x))
-                                        RectCollection[number].Origin.X = x;
-                                    if (split.Length >= 3 && int.TryParse(split[2], out int y))
-                                        RectCollection[number].Origin.Y = y;
-                                    if (split.Length >= 4 && int.TryParse(split[3], out int w))
-                                        RectCollection[number].Size.X = w;
-                                    if (split.Length >= 5 && int.TryParse(split[4], out int h))
-                                        RectCollection[number].Size.Y = h;
+                                    if (split.Length >= 2)
+                                        RectCollection[number].Origin.X = int.TryParse(split[1], out int x) ? x : 0;
+                                    if (split.Length >= 3)
+                                        RectCollection[number].Origin.Y = int.TryParse(split[2], out int y) ? y : 0;
+                                    if (split.Length >= 4)
+                                        RectCollection[number].Size.X = int.TryParse(split[3], out int w) ? w : 0;
+                                    if (split.Length >= 5)
+                                        RectCollection[number].Size.Y = int.TryParse(split[4], out int h) ? h : 0;
+
+                                    if (split.Length < 5)
+                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
+
+                                    if (containsComment)
+                                        RectComments[number] = line.Substring(line.IndexOf("//"));
                                 }
                                 else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
                                 {
-                                    if (IsLegacy)
-                                    {
-                                        Rectangle<int>[] newRect = new Rectangle<int>[Data * Data];
-                                        for (int i = 0; i < RectCollection.Length; i++)
-                                        {
-                                            if (RectCollection[i] != new Rectangle<int>(0, 0, 0, 0))
-                                                newRect[int.Parse(i.ToString(), NumberStyles.HexNumber)] = RectCollection[i];
-                                        }
-                                        RectCollection = newRect;
-                                        IsLegacy = false;
-                                    }
+                                    if (split.Length >= 2)
+                                        RectCollection[number_from_hex].Origin.X = int.TryParse(split[1], out int x) ? x : 0;
+                                    if (split.Length >= 3)
+                                        RectCollection[number_from_hex].Origin.Y = int.TryParse(split[2], out int y) ? y : 0;
+                                    if (split.Length >= 4)
+                                        RectCollection[number_from_hex].Size.X = int.TryParse(split[3], out int w) ? w : 0;
+                                    if (split.Length >= 5)
+                                        RectCollection[number_from_hex].Size.Y = int.TryParse(split[4], out int h) ? h : 0;
 
-                                    if (split.Length >= 2 && int.TryParse(split[1], out int x))
-                                        RectCollection[number_from_hex].Origin.X = x;
-                                    if (split.Length >= 3 && int.TryParse(split[2], out int y))
-                                        RectCollection[number_from_hex].Origin.Y = y;
-                                    if (split.Length >= 4 && int.TryParse(split[3], out int w))
-                                        RectCollection[number_from_hex].Size.X = w;
-                                    if (split.Length >= 5 && int.TryParse(split[4], out int h))
-                                        RectCollection[number_from_hex].Size.Y = h;
+                                    if (split.Length < 5)
+                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
+
+                                    if (containsComment)
+                                        RectComments[number_from_hex] = line.Substring(line.IndexOf("//"));
                                 }
                                 break;
                         }
                     }
+                    linecount++;
                 }
                 for (int i = 0; i < AnimeCollection.Length; i++)
                 {
                     List<int> all_lengths = new List<int>();
 
-                    if (AnimeCollection[i].Pattern != null)
+                    foreach (AnimeData.PatternData pattern in AnimeCollection[i].Pattern)
                     {
-                        all_lengths.Add(AnimeCollection[i].Pattern.Length);
+                        all_lengths.Add(pattern.Sprite.Length);
+                        if (pattern.Offset.Length > 0) all_lengths.Add(pattern.Offset.Length);
                     }
-                    if (AnimeCollection[i].Texture != null)
+                    foreach (AnimeData.TextureData tex in AnimeCollection[i].Texture)
                     {
-                        foreach (int[][] tex in AnimeCollection[i].Texture)
-                        {
-                            all_lengths.Add(tex.Length);
-                        }
+                        all_lengths.Add(tex.Sprite.Length);
+                        if (tex.Offset.Length > 0) all_lengths.Add(tex.Offset.Length);
+                        if (tex.Alpha.Length > 0) all_lengths.Add(tex.Alpha.Length);
+                        if (tex.Offset.Length > 0) all_lengths.Add(tex.Offset.Length);
                     }
-                    if (AnimeCollection[i].Layer != null)
+                    foreach (AnimeData.PatternData layer in AnimeCollection[i].Layer)
                     {
-                        foreach (int[][] layer in AnimeCollection[i].Layer)
-                        {
-                            all_lengths.Add(layer.Length);
-                        }
+                        all_lengths.Add(layer.Sprite.Length);
+                        if (layer.Offset.Length > 0) all_lengths.Add(layer.Offset.Length);
                     }
 
                     AnimeCollection[i].FrameCount = all_lengths.Count > 0 ? all_lengths.Min() : 0;
@@ -513,7 +508,7 @@ namespace CHPEditor
             }
             catch (Exception e)
             {
-                string err = "Something went wrong while trying to read the requested CHP file. More details:" + Environment.NewLine + e;
+                string err = "Something went wrong while trying to read the requested CHP file at line " + linecount + ". More details:" + Environment.NewLine + e;
                 Trace.TraceError(err);
                 Error = err;
             }
@@ -554,6 +549,93 @@ namespace CHPEditor
             return array;
         }
 
+        private int ParseFromHex(string hex, int baseSize = 16)
+        {
+            if (baseSize > 36) { throw new ArgumentException($"CHPEditor does not support a Base size greater than 36 for CHP files. Consider setting #Data to 16 or 36. If you need more than 1296 rects, consider reducing your rect count. (Base size given was {baseSize}.)"); }
+
+            const string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            //const string base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // Unsure if supporting this is necessary at all. Leaving this here just in case.
+
+            int value = 0;
+            hex = hex.ToUpper();
+
+            for (int i = 0; i < hex.Length; i++)
+            {
+                char c = hex[(hex.Length - 1) - i];
+                int result = base36.IndexOf(c);
+
+                if (result < 0)
+                    throw new InvalidOperationException($"Invalid character received while converting hex to integer. (Could not read '{c}'.)");
+                if (result >= baseSize)
+                    throw new ArgumentOutOfRangeException($"Expected the value of '{c}' to be less than Base range of {baseSize}, but got {result} instead.");
+
+                value += result * (int)Math.Pow(baseSize, i);
+            }
+
+            return value;
+        }
+        private int[] ParseFromHexes(string hex, int baseSize = 16, int length = 2)
+        {
+            int count = hex.Length / length;
+            int[] result = new int[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                string item = hex.Substring(i * length, length);
+
+                if (item == "--")
+                    result[i] = -1;
+                else
+                    result[i] = ParseFromHex(item, baseSize);
+            }
+
+            return result;
+        }
+        private InterpolateData.InterpolateKey[] ParseFromInts(int[] array, int frame)
+        {
+            if (array.Length == 0) return [];
+
+            var keys = new List<InterpolateData.InterpolateKey>();
+            var key = new InterpolateData.InterpolateKey();
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i] == -1)
+                    key.Length += frame;
+
+                if ((i > 0) && (i + 1 < array.Length)) // Balance out single keyframe between two interpolations
+                {
+                    if (array[i] != -1 && array[i - 1] == -1 && array[i + 1] == -1)
+                    {
+                        key.Length -= frame;
+                    }
+                }
+                if (i > 0) // Mark end of interpolating key
+                {
+                    if (array[i] != -1 && array[i - 1] == -1)
+                    {
+                        key.Length += frame;
+                        key.EndIndex = array[i];
+                        keys.Add(key);
+                    }
+                }
+                if (i + 1 < array.Length) // Mark start of interpolating key
+                {
+                    if (array[i] != -1 && array[i + 1] == -1)
+                    {
+                        key = new InterpolateData.InterpolateKey()
+                        {
+                            Start = frame * i,
+                            Length = frame,
+                            StartIndex = array[i]
+                        };
+                    }
+                }
+            }
+
+            return keys.ToArray();
+        }
+
         #region Dispose
         private bool isDisposed;
         protected virtual void Dispose(bool disposing)
@@ -572,6 +654,7 @@ namespace CHPEditor
                     Artist = "";
                     CharFile = "";
                     RectCollection = [];
+                    RectComments = [];
                     AnimeCollection = [];
                     InterpolateCollection = [];
                 }
