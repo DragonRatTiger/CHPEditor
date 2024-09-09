@@ -77,7 +77,7 @@ namespace CHPEditor
             ImGui.SetWindowPos(new System.Numerics.Vector2(300, 0), ImGuiCond.FirstUseEver);
             ImGui.SetWindowSize(new System.Numerics.Vector2(300, 300), ImGuiCond.FirstUseEver);
 
-            ImGui.InputTextWithHint(CHPEditor.Lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref CHPEditor.Config.Path, 64);
+            ImGui.InputTextWithHint(CHPEditor.Lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref CHPEditor.Config.Path, 1024);
             if (ImGui.Button(CHPEditor.Lang.GetValue("CHP_RELOAD_PROMPT")))
             {
                 CHPEditor.ChpFile.Dispose();
