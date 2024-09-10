@@ -453,7 +453,7 @@ namespace CHPEditor
                                     if (containsComment)
                                         RectComments[number] = line.Substring(line.IndexOf("//") + 2).Trim();
                                 }
-                                else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
+                                else if (TryParseFromHex(split[0].Substring(1, 2), Data, out int number_from_hex))
                                 {
                                     if (split.Length >= 2)
                                         RectCollection[number_from_hex].Origin.X = int.TryParse(split[1], out int x) ? x : 0;
@@ -646,6 +646,11 @@ namespace CHPEditor
             }
 
             return keys.ToArray();
+        }
+        private bool TryParseFromHex(string hex, int baseSize, out int result)
+        {
+            try { result = ParseFromHex(hex, baseSize); return true; }
+            catch (Exception e) { result = 0; return false; }
         }
         #endregion
         #region Draw Methods
