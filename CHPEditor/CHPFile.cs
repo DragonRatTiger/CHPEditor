@@ -513,7 +513,8 @@ namespace CHPEditor
                 Error = err;
             }
         }
-        
+
+        #region Parsing Methods
         private unsafe void LoadTexture(ref BitmapData data, string filepath, ColorKeyType colorKey = ColorKeyType.Auto, byte r = 0x00, byte g = 0x00, byte b = 0x00, byte a = 0xFF)
         {
             data.Path = filepath;
@@ -635,7 +636,29 @@ namespace CHPEditor
 
             return keys.ToArray();
         }
-
+        #endregion
+        #region Draw Methods
+        public unsafe void Draw(ref BitmapData bitmap)
+        {
+            if (!bitmap.Loaded) return;
+            var rect = new Rectangle<int>(0, 0, bitmap.ImageFile.Image.Width, bitmap.ImageFile.Image.Height);
+            Draw(ref bitmap, rect, rect);
+        }
+        public unsafe void Draw(ref BitmapData bitmap, Rectangle<int> rect, Rectangle<int> offset)
+        {
+            Draw(ref bitmap, rect, offset, 0.0, 1.0f);
+        }
+        public unsafe void Draw(ref BitmapData bitmap, Rectangle<int> rect, Rectangle<int> offset, double rot, float alpha)
+        {
+            if (!bitmap.Loaded) return;
+            if ((AutoColorSet && bitmap.ColorKeyType == ColorKeyType.Auto) ||
+                bitmap.ColorKeyType == ColorKeyType.Manual ||
+                IsLegacy)
+                bitmap.ImageFile.Draw(rect, offset, rot, alpha, bitmap.ColorKey.R / 255.0f, bitmap.ColorKey.G / 255.0f, bitmap.ColorKey.B / 255.0f, bitmap.ColorKey.A / 255.0f);
+            else
+                bitmap.ImageFile.Draw(rect, offset, rot, alpha);
+        }
+        #endregion
         #region Dispose
         private bool isDisposed;
         protected virtual void Dispose(bool disposing)

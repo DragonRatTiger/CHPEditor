@@ -363,11 +363,7 @@ void main()
                 }
                 if (data.Loaded)
                 {
-                    Draw(
-                        ref data, 
-                        new Rectangle<int>(0,0,data.Bounds), 
-                        new Rectangle<int>(0,0,data.Bounds)
-                        );
+                    ChpFile.Draw(ref data);
                 }
             }
         }
@@ -422,25 +418,13 @@ void main()
                     {
                         if (use2P && ChpFile.CharBMP2P.Loaded)
                         {
-                            Draw(
-                                ref ChpFile.CharBMP2P,
-                                ChpFile.RectCollection[1],
-                                bgdst);
-                            Draw(
-                                ref ChpFile.CharBMP2P,
-                                ChpFile.RectCollection[0],
-                                namedst);
+                            ChpFile.Draw(ref ChpFile.CharBMP2P, ChpFile.RectCollection[1], bgdst);
+                            ChpFile.Draw(ref ChpFile.CharBMP2P, ChpFile.RectCollection[0], namedst);
                         }
                         else
                         {
-                            Draw(
-                                ref ChpFile.CharBMP,
-                                ChpFile.RectCollection[1],
-                                bgdst);
-                            Draw(
-                                ref ChpFile.CharBMP,
-                                ChpFile.RectCollection[0],
-                                namedst);
+                            ChpFile.Draw(ref ChpFile.CharBMP, ChpFile.RectCollection[1], bgdst);
+                            ChpFile.Draw(ref ChpFile.CharBMP, ChpFile.RectCollection[0], namedst);
                         }
                     }
 
@@ -527,9 +511,9 @@ void main()
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
-                            Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
+                            ChpFile.Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
                         else
-                            Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
+                            ChpFile.Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
                     }
                     // Texture
                     for (int i = 0; i < ChpFile.AnimeCollection[state].Texture.Count; i++)
@@ -549,7 +533,7 @@ void main()
                         Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
                         Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
                         float alpha = 1.0f;
-                        float rotation = 0.0f;
+                        double rotation = 0.0;
 
                         for (int j = 0; j < inter.Sprite.Length; j++)
                         {
@@ -590,7 +574,7 @@ void main()
                             {
                                 double progress = (double)(currenttime - inter.Rotation[j].Start) / (double)inter.Rotation[j].Length;
                                 var diff = inter.Rotation[j].StartIndex + (int)((inter.Rotation[j].EndIndex - inter.Rotation[j].StartIndex) * progress);
-                                rotation = (diff / 255.0f) * 360.0f;
+                                rotation = (diff / 255.0) * 360.0;
                                 isInterpole[3] = true;
                             }
                         }
@@ -602,16 +586,16 @@ void main()
                         if (!isInterpole[2] && alphaindex != -1)
                             alpha = alphaindex / 255.0f;
                         if (!isInterpole[3] && rotationindex != -1)
-                            rotation = (rotationindex / 255.0f) * 360.0f;
+                            rotation = (rotationindex / 255.0) * 360.0;
 
                         offset.Origin.X += anchor_x;
                         offset.Origin.Y += anchor_y;
                         #endregion
 
                         if (use2P && ChpFile.CharTex2P.Loaded)
-                            Draw(ref ChpFile.CharTex2P, sprite, offset, (double)rotation, alpha);
+                            ChpFile.Draw(ref ChpFile.CharTex2P, sprite, offset, rotation, alpha);
                         else
-                            Draw(ref ChpFile.CharTex, sprite, offset, (double)rotation, alpha);
+                            ChpFile.Draw(ref ChpFile.CharTex, sprite, offset, rotation, alpha);
                     }
                     // Layer
                     for (int i = 0; i < ChpFile.AnimeCollection[state].Layer.Count; i++)
@@ -696,9 +680,9 @@ void main()
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
-                            Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
+                            ChpFile.Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
                         else
-                            Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
+                            ChpFile.Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
                     }
                 }
                 else if (anishow != anistate)
@@ -706,89 +690,6 @@ void main()
                     Trace.TraceWarning("State #" + anishow + " is not loaded. Nothing will be displayed.");
                     anistate = anishow;
                 }
-        }
-        static unsafe void Draw(ref CHPFile.BitmapData bitmap_data, Rectangle<int> rect, Rectangle<int> offset)
-        {
-            Draw(ref bitmap_data, rect, offset, 0.0, 1f);
-        }
-        static unsafe void Draw(ref CHPFile.BitmapData bitmap_data, Rectangle<int> rect, Rectangle<int> offset, double rot, float alpha)
-        {
-            float RectX = (float)rect.Origin.X / bitmap_data.Bounds.X;
-            float RectY = (float)rect.Origin.Y / bitmap_data.Bounds.Y;
-            float RectW = (float)rect.Size.X / bitmap_data.Bounds.X;
-            float RectH = (float)rect.Size.Y / bitmap_data.Bounds.Y;
-            float OffX = (float)offset.Origin.X / 100.0f;
-            float OffY = (float)offset.Origin.Y / 100.0f;
-            float OffW = (float)offset.Size.X / 100.0f;
-            float OffH = (float)offset.Size.Y / 100.0f;
-
-            // Fix non-uniform viewports creating warped rotations
-            float viewportX = 100.0f / _window.FramebufferSize.X;
-            float viewportY = 100.0f / _window.FramebufferSize.Y;
-
-            OffX *= 2;
-            OffY *= 2;
-            OffW *= 2;
-            OffH *= 2;
-
-            _gl.BindVertexArray(_vao);
-            _gl.UseProgram(_program);
-
-            _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, bitmap_data.ImageFile.Pointer);
-
-            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-
-            float[] vertices =
-            {    /* X */     /* Y */       /* U */        /* V */
-                 OffW + OffX,        -OffY, RectW + RectX,         RectY, //top-right
-                 OffW + OffX, -OffH - OffY, RectW + RectX, RectH + RectY, //bottom-right
-                      + OffX, -OffH - OffY,  0.0f + RectX, RectH + RectY, //bottom-left
-                      + OffX,        -OffY,  0.0f + RectX,         RectY  //top-left
-            };
-
-            if (rot != 0.0f)
-            {
-                double[] center = new double[2] { (vertices[12] + vertices[4]) / 2.0f, (vertices[13] + vertices[5]) / 2.0f };
-                rot = rot * Math.PI / 180.0;
-                for (int i = 0; i < vertices.Length; i += 4)
-                {
-                    double sin = Math.Sin(rot);
-                    double cos = Math.Cos(rot);
-
-                    vertices[i] -= (float)center[0];
-                    vertices[i+1] -= (float)center[1];
-
-                    float x = (float)((vertices[i] * cos) - (vertices[i + 1] * sin));
-                    float y = (float)((vertices[i] * sin) + (vertices[i + 1] * cos));
-
-                    vertices[i] = x + (float)center[0];
-                    vertices[i+1] = y + (float)center[1];
-                }
-            }
-
-            // Fix non-uniform viewports causing warped rotations
-            for (int i = 0; i < vertices.Length; i += 4)
-            {
-                vertices[i] = (vertices[i] * viewportX) - 1.0f;
-                vertices[i+1] = (vertices[i+1] * viewportY) + 1.0f;
-            }
-
-            fixed (float* buffer = vertices)
-                _gl.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (nuint)vertices.Length * sizeof(float), buffer);
-
-            _gl.Uniform1(tex_loc, 0);
-            _gl.Uniform1(alpha_loc, alpha);
-            if (ChpFile.AutoColorSet && bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Auto ||
-                bitmap_data.ColorKeyType == CHPFile.ColorKeyType.Manual ||
-                ChpFile.IsLegacy)
-                _gl.Uniform4(key_loc, (float)bitmap_data.ColorKey.R / 255.0f, (float)bitmap_data.ColorKey.G / 255.0f, (float)bitmap_data.ColorKey.B / 255.0f, (float)bitmap_data.ColorKey.A / 255.0f);
-            else
-                _gl.Uniform4(key_loc, 0.0, 0.0, 0.0, 0.0);
-
-            _gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, (void*)0);
-
-            _gl.Uniform1(alpha_loc, 1.0f);
         }
     }
 }
