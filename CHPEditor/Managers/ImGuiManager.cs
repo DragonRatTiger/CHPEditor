@@ -12,6 +12,10 @@ namespace CHPEditor
         public static bool[] PatternDisabled = [];
         public static bool[] TextureDisabled = [];
         public static bool[] LayerDisabled = [];
+
+        private static bool patternTree = false;
+        private static bool textureTree = false;
+        private static bool layerTree = false;
         public static void Draw()
         {
             //if (ImGui.BeginMainMenuBar())
@@ -214,58 +218,76 @@ namespace CHPEditor
                                 loopIsExceeding ? 
                                 CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_WARN_BOUNDS", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop) :
                                 CHPEditor.Lang.GetValue("CHP_CHARA_LOOP", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop));
-                            ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT"), ref CHPEditor.useLoop);
                         }
-                        ImGui.Separator();
+
+                        ImGui.Columns(3);
 
                         ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref CHPEditor.pause);
+
+                        ImGui.NextColumn();
+
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop > 0)
+                            ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT"), ref CHPEditor.useLoop);
+                        else
+                            ImGui.TextDisabled(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT_DISABLED"));
+
+                        ImGui.NextColumn();
+
                         if (CHPEditor.ChpFile.CharBMP2P.Loaded)
                             ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref CHPEditor.use2P);
+                        else
+                            ImGui.TextDisabled(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT_DISABLED"));
+
+                        ImGui.NextColumn();
+
+                        ImGui.Columns();
+
+                        ImGui.Separator();
 
                         if (CHPEditor.anishow != 14)
                             ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_BG_PROMPT"), ref CHPEditor.hideBg);
 
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count));
+                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count));
                             
-                            if (ImGui.BeginListBox("Hide Pattern(s)"))
+                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count) + "###PATTERN_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < PatternDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment != "" ?
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment) :
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !PatternDisabled[i]))
                                         PatternDisabled[i] = !PatternDisabled[i];
-                                ImGui.EndListBox();
+                                ImGui.TreePop();
                             }
 
                         }
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count));
+                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count));
 
-                            if (ImGui.BeginListBox("Hide Texture(s)"))
+                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count) + "###TEXTURE_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < TextureDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment != "" ?
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment) :
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !TextureDisabled[i]))
                                         TextureDisabled[i] = !TextureDisabled[i];
-                                ImGui.EndListBox();
+                                ImGui.TreePop();
                             }
                         }
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count));
+                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count));
 
-                            if (ImGui.BeginListBox("Hide Layer(s)"))
+                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count) + "###LAYER_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < LayerDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment != "" ?
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment) :
                                         CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !LayerDisabled[i]))
                                         LayerDisabled[i] = !LayerDisabled[i];
-                                ImGui.EndListBox();
+                                ImGui.TreePop();
                             }
                         }
                     }

@@ -26,6 +26,9 @@
 
     "ANIMATIONS_PAUSE_PROMPT": "Pause Animation",
     "ANIMATIONS_USE2P_PROMPT": "Use 2P Palette",
+    "ANIMATIONS_USE2P_PROMPT_DISABLED": "2P Palette unavailable",
+    "CHP_CHARA_LOOP_PROMPT": "Show Loop Only",
+    "CHP_CHARA_LOOP_PROMPT_DISABLED": "Loop unavailable",
 
     "CHP_PATH_PROMPT": "Path",
     "CHP_RELOAD_PROMPT": "Reload File",
@@ -50,7 +53,6 @@
     "CHP_CHARA_ITEM_DETAIL": "#{0} ({1})",
     "CHP_CHARA_ANIMATION_NONE": "No Animation Available",
 
-    "CHP_CHARA_LOOP_PROMPT": "Show Loop Only",
     "CHP_CHARA_HIDE_BG_PROMPT": "Hide Background & Name",
     "CHP_CHARA_HIDE_PATTERN_PROMPT": "Hide Pattern",
     "CHP_CHARA_HIDE_TEXTURE_PROMPT": "Hide Texture Count",
