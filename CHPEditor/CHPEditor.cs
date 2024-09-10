@@ -465,12 +465,13 @@ void main()
                             }
                         }
 
-                        if (!isInterpole[0])
-                            sprite = spriteindex != -1 ? 
-                                ChpFile.RectCollection[spriteindex] : sprite;
-                        if (!isInterpole[1])
-                            offset = offsetindex != -1 ?
-                                ChpFile.RectCollection[offsetindex] : new Rectangle<int>(0,0,ChpFile.Size.Width,ChpFile.Size.Height);
+                        if (!isInterpole[0] && spriteindex != -1)
+                            sprite = ChpFile.RectCollection[spriteindex];
+
+                        if (!isInterpole[1] && offsetindex != -1)
+                            offset = ChpFile.RectCollection[offsetindex];
+                        else if (!isInterpole[1] && offsetindex == -1)
+                            offset.Size = sprite.Size;
 
                         offset.Origin.X += anchor_x;
                         offset.Origin.Y += anchor_y;
@@ -581,8 +582,12 @@ void main()
 
                         if (!isInterpole[0] && spriteindex != -1)
                             sprite = ChpFile.RectCollection[spriteindex];
+
                         if (!isInterpole[1] && offsetindex != -1)
                             offset = ChpFile.RectCollection[offsetindex];
+                        else if (!isInterpole[1] && offsetindex == -1)
+                            offset.Size = sprite.Size;
+
                         if (!isInterpole[2] && alphaindex != -1)
                             alpha = alphaindex / 255.0f;
                         if (!isInterpole[3] && rotationindex != -1)
@@ -634,12 +639,13 @@ void main()
                             }
                         }
 
-                        if (!isInterpole[0])
-                            sprite = spriteindex != -1 ?
-                                ChpFile.RectCollection[spriteindex] : sprite;
-                        if (!isInterpole[1])
-                            offset = offsetindex != -1 ?
-                                ChpFile.RectCollection[offsetindex] : new Rectangle<int>(0, 0, sprite.Size.X, sprite.Size.Y);
+                        if (!isInterpole[0] && spriteindex != -1)
+                            sprite = ChpFile.RectCollection[spriteindex];
+
+                        if (!isInterpole[1] && offsetindex != -1)
+                            offset = ChpFile.RectCollection[offsetindex];
+                        else if (!isInterpole[1] && offsetindex == -1)
+                            offset.Size = sprite.Size;
 
                         offset.Origin.X += anchor_x;
                         offset.Origin.Y += anchor_y;
