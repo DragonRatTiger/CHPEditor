@@ -60,6 +60,10 @@ namespace CHPEditor
                 /// The index pointing to which offset/scale to use for the sprite.
                 /// </summary>
                 public int[] Offset;
+                /// <summary>
+                /// If available, this variable will contain the comment left after the data.
+                /// </summary>
+                public string Comment;
             }
             public struct TextureData
             {
@@ -80,6 +84,10 @@ namespace CHPEditor
                 /// The angle of the sprite being displayed, written in byte format, and then calculated to get the closest matching angle in degrees.
                 /// </summary>
                 public int[] Rotation;
+                /// <summary>
+                /// If available, this variable will contain the comment left after the data.
+                /// </summary>
+                public string Comment;
             }
 
             public bool Loaded;
@@ -341,10 +349,11 @@ namespace CHPEditor
                                 int patern = int.Parse(split[1]) - 1;
                                 int frame = AnimeCollection[patern].Frame > 0 ? AnimeCollection[patern].Frame : Anime;
 
-                                AnimeCollection[patern].Pattern.Add(new AnimeData.PatternData() 
-                                { 
+                                AnimeCollection[patern].Pattern.Add(new AnimeData.PatternData()
+                                {
                                     Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
-                                    Offset = split.Length >= 4 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : []
+                                    Offset = split.Length >= 4 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : [],
+                                    Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 } );
 
                                 InterpolateCollection[patern].Pattern.Add(new InterpolateData.PatternData() 
@@ -376,7 +385,8 @@ namespace CHPEditor
                                     Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
                                     Offset = split.Length > 3 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : [],
                                     Alpha = split.Length > 4 ? ParseFromHexes(split[4]) : [],
-                                    Rotation = split.Length > 5 ? ParseFromHexes(split[5]) : []
+                                    Rotation = split.Length > 5 ? ParseFromHexes(split[5]) : [],
+                                    Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 });
 
                                 InterpolateCollection[texture].Texture.Add(new InterpolateData.TextureData()
@@ -403,7 +413,8 @@ namespace CHPEditor
                                 AnimeCollection[layer].Layer.Add(new AnimeData.PatternData()
                                 {
                                     Sprite = ParseFromHexes(split[2], IsLegacy ? 16 : Data),
-                                    Offset = split.Length > 3 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : []
+                                    Offset = split.Length > 3 ? ParseFromHexes(split[3], IsLegacy ? 16 : Data) : [],
+                                    Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 });
 
                                 InterpolateCollection[layer].Layer.Add(new InterpolateData.PatternData()
@@ -440,7 +451,7 @@ namespace CHPEditor
                                         Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
 
                                     if (containsComment)
-                                        RectComments[number] = line.Substring(line.IndexOf("//"));
+                                        RectComments[number] = line.Substring(line.IndexOf("//") + 2).Trim();
                                 }
                                 else if (int.TryParse(split[0].Substring(1, 2), NumberStyles.HexNumber, null, out int number_from_hex))
                                 {
@@ -457,7 +468,7 @@ namespace CHPEditor
                                         Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
 
                                     if (containsComment)
-                                        RectComments[number_from_hex] = line.Substring(line.IndexOf("//"));
+                                        RectComments[number_from_hex] = line.Substring(line.IndexOf("//") + 2).Trim();
                                 }
                                 break;
                         }

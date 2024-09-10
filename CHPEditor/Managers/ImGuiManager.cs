@@ -9,6 +9,9 @@ namespace CHPEditor
 {
     static class ImGuiManager
     {
+        public static bool[] PatternDisabled = [];
+        public static bool[] TextureDisabled = [];
+        public static bool[] LayerDisabled = [];
         public static void Draw()
         {
             //if (ImGui.BeginMainMenuBar())
@@ -50,11 +53,6 @@ namespace CHPEditor
                 {
                     CHPEditor.anitoggle = true;
 
-                    ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref CHPEditor.pause);
-                    if (CHPEditor.ChpFile.CharBMP2P.Loaded)
-                        ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref CHPEditor.use2P);
-
-                    ImGui.Separator();
                     for (int i = 1; i <= 18; i++)
                     {
                         string text = CHPEditor.Lang.GetValue("STATE_FULL_INDEXED", i, CHPEditor.Lang.GetValue(string.Format("STATE{0}_TITLE", i)));
@@ -63,6 +61,10 @@ namespace CHPEditor
                             Trace.TraceInformation("Previewing " + text);
                             CHPEditor.anishow = i;
                             CHPEditor.tick = 0;
+
+                            PatternDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[i - 1].Pattern.Count];
+                            TextureDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[i - 1].Texture.Count];
+                            LayerDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[i - 1].Layer.Count];
                         }
                     }
                     ImGui.EndTabItem();
@@ -85,6 +87,10 @@ namespace CHPEditor
                 CHPEditor.ChpFile = new CHPFile(CHPEditor.Config.Path);
                 CHPEditor.currentframe = 0;
                 CHPEditor.currenttime = 0;
+
+                PatternDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count];
+                TextureDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count];
+                LayerDisabled = new bool[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count];
             }
 #if DEBUG
             ImGui.Checkbox("DEBUG ONLY! Show ImGUI Demo Window", ref CHPEditor.showDebug);
@@ -177,57 +183,90 @@ namespace CHPEditor
                 }
                 else
                 {
-                    ImGui.Text(CHPEditor.Lang.GetValue("STATE_INDEXED", CHPEditor.anistate) + "\n\n");
-                    if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Loaded)
+                    ImGui.Text(CHPEditor.Lang.GetValue("STATE_INDEXED", CHPEditor.anishow) + "\n\n");
+                    if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loaded)
                     {
-                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Frame != 0)
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame != 0)
                         {
                             ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TIMELINE",
                             CHPEditor.currentframe,
-                            CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].FrameCount - 1,
+                            CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount - 1,
                             Math.Round(CHPEditor.currenttime / 1000.0, 2),
-                            (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Frame * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].FrameCount) / 1000.0
+                            (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount) / 1000.0
                             ));
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Frame, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Frame));
+                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame));
                         }
                         else
                         {
                             ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TIMELINE",
                             CHPEditor.currentframe,
-                            CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].FrameCount - 1,
+                            CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount - 1,
                             Math.Round(CHPEditor.currenttime / 1000.0, 2),
-                            (CHPEditor.ChpFile.Anime * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].FrameCount) / 1000.0
+                            (CHPEditor.ChpFile.Anime * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount) / 1000.0
                                 ));
                             ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.Anime, CHPEditor.ChpFile.Anime));
                         }
 
-                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Loop > 0)
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop > 0)
                         {
-                            bool loopIsExceeding = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Loop >= CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].FrameCount; // True if Loop exceeds index of last frame
+                            bool loopIsExceeding = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop >= CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount; // True if Loop exceeds index of last frame
                             ImGui.TextColored( loopIsExceeding ? new Vector4(1, 0, 0, 1) : new Vector4(1),
                                 loopIsExceeding ? 
-                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_WARN_BOUNDS", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Loop) :
-                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Loop));
+                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_WARN_BOUNDS", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop) :
+                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop));
                             ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT"), ref CHPEditor.useLoop);
                         }
                         ImGui.Separator();
 
+                        ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref CHPEditor.pause);
+                        if (CHPEditor.ChpFile.CharBMP2P.Loaded)
+                            ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref CHPEditor.use2P);
+
                         if (CHPEditor.anishow != 14)
                             ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_BG_PROMPT"), ref CHPEditor.hideBg);
-                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Pattern != null)
+
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE"));
-                            ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_PATTERN_PROMPT"), ref CHPEditor.hidePat);
+                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count));
+                            
+                            if (ImGui.BeginListBox("Hide Pattern(s)"))
+                            {
+                                for (int i = 0; i < PatternDisabled.Length; i++)
+                                    if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment != "" ?
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment) :
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !PatternDisabled[i]))
+                                        PatternDisabled[i] = !PatternDisabled[i];
+                                ImGui.EndListBox();
+                            }
+
                         }
-                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Texture != null)
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Texture.Count));
-                            ImGui.SliderInt(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_TEXTURE_PROMPT"), ref CHPEditor.hideTexCount, 0, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Texture.Count);
+                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count));
+
+                            if (ImGui.BeginListBox("Hide Texture(s)"))
+                            {
+                                for (int i = 0; i < TextureDisabled.Length; i++)
+                                    if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment != "" ?
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment) :
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !TextureDisabled[i]))
+                                        TextureDisabled[i] = !TextureDisabled[i];
+                                ImGui.EndListBox();
+                            }
                         }
-                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Layer != null)
+                        if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count > 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Layer.Count));
-                            ImGui.SliderInt(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_LAYER_PROMPT"), ref CHPEditor.hideLayCount, 0, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anistate - 1].Layer.Count);
+                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count));
+
+                            if (ImGui.BeginListBox("Hide Layer(s)"))
+                            {
+                                for (int i = 0; i < LayerDisabled.Length; i++)
+                                    if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment != "" ?
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment) :
+                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !LayerDisabled[i]))
+                                        LayerDisabled[i] = !LayerDisabled[i];
+                                ImGui.EndListBox();
+                            }
                         }
                     }
                     else

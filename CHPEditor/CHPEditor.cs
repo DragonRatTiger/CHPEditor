@@ -431,6 +431,11 @@ void main()
                     // Pattern
                     for (int i = 0; i < ChpFile.AnimeCollection[state].Pattern.Count; i++)
                     {
+                        // Skip this interval if requested to hide
+                        if (i < ImGuiManager.PatternDisabled.Length)
+                            if (ImGuiManager.PatternDisabled[i])
+                                continue;
+
                         var pattern = ChpFile.AnimeCollection[state].Pattern[i];
                         var inter = ChpFile.InterpolateCollection[state].Pattern[i];
                         int framecap = Math.Clamp(currentframe, 0, pattern.Sprite.Length - 1);
@@ -519,6 +524,11 @@ void main()
                     // Texture
                     for (int i = 0; i < ChpFile.AnimeCollection[state].Texture.Count; i++)
                     {
+                        // Skip this interval if requested to hide
+                        if (i < ImGuiManager.TextureDisabled.Length)
+                            if (ImGuiManager.TextureDisabled[i])
+                                continue;
+
                         var texture = ChpFile.AnimeCollection[state].Texture[i];
                         var inter = ChpFile.InterpolateCollection[state].Texture[i];
                         int framecap = Math.Clamp(currentframe, 0, texture.Sprite.Length - 1);
@@ -605,6 +615,11 @@ void main()
                     // Layer
                     for (int i = 0; i < ChpFile.AnimeCollection[state].Layer.Count; i++)
                     {
+                        // Skip this interval if requested to hide
+                        if (i < ImGuiManager.LayerDisabled.Length)
+                            if (ImGuiManager.LayerDisabled[i])
+                                continue;
+
                         var layer = ChpFile.AnimeCollection[state].Layer[i];
                         var inter = ChpFile.InterpolateCollection[state].Layer[i];
                         int framecap = Math.Clamp(currentframe, 0, layer.Sprite.Length - 1);
