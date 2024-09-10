@@ -1,7 +1,9 @@
-# CHPEditor (0.1.2.3) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
+# CHPEditor (0.1.2.4) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
 ## An (extremely not finished) application for ~~editing~~ previewing CHP (Pomyu Chara) files
 
-![Screenshot of CHPEditor version 0.1.2, displaying Yoshino from Colorful Channel doing her fever win animation](readme/0.png)
+![Screenshot of CHPEditor version 0.1.2.4, displaying Moji-kun from Mojipittan doing his fever win animation](readme/0.png)
+
+*Moji-kun (もじくん) from Mojipittan (もじぴったん), animated by [Nanoka (なのか)](https://082f.xxxxxxxx.jp)*
 
 Alongside being a personal project to further study C# & application development, I hope to also create a modern editor for Pomyu Charas.
 
