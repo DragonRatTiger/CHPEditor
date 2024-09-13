@@ -36,7 +36,12 @@ namespace CHPEditor
         public Size Size = new Size(121, 271); // Begin with 121,271 for legacy support. Modern pomyus are typically 167,271.
         public int Wait = 1; // # of times to repeat idle animation before playing other animations
         public int Data = 10; // Required for hexadecimal conversion. Defaulted to 10 for legacy pomyu support.
-        public bool AutoColorSet = false;
+        public bool AutoColorSet
+        {
+            get { return IsLegacy ? true : _autoColorSet; }
+            set { _autoColorSet = value; }
+        }
+        private bool _autoColorSet = false;
         public Rectangle<int> CharFaceUpperSize = new Rectangle<int>(0, 0, 256, 256);
         public Rectangle<int> CharFaceAllSize = new Rectangle<int>(320, 0, 320, 480);
 
@@ -51,7 +56,7 @@ namespace CHPEditor
         {
             public struct PatternData
             {
-                public PatternData() { Sprite = []; Offset = []; }
+                public PatternData() { Sprite = []; Offset = []; Comment = ""; }
                 /// <summary>
                 /// The index pointing to which sprite to display.
                 /// </summary>
@@ -67,7 +72,7 @@ namespace CHPEditor
             }
             public struct TextureData
             {
-                public TextureData() { Sprite = []; Offset = []; Alpha = []; Rotation = []; }
+                public TextureData() { Sprite = []; Offset = []; Alpha = []; Rotation = []; Comment = ""; }
                 /// <summary>
                 /// The index pointing to which sprite to display.
                 /// </summary>
@@ -668,8 +673,7 @@ namespace CHPEditor
         {
             if (!bitmap.Loaded) return;
             if ((AutoColorSet && bitmap.ColorKeyType == ColorKeyType.Auto) ||
-                bitmap.ColorKeyType == ColorKeyType.Manual ||
-                IsLegacy)
+                bitmap.ColorKeyType == ColorKeyType.Manual)
                 bitmap.ImageFile.Draw(rect, offset, rot, alpha, bitmap.ColorKey.R / 255.0f, bitmap.ColorKey.G / 255.0f, bitmap.ColorKey.B / 255.0f, bitmap.ColorKey.A / 255.0f);
             else
                 bitmap.ImageFile.Draw(rect, offset, rot, alpha);
