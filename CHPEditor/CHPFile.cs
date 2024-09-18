@@ -10,7 +10,7 @@ using Silk.NET.Maths;
 
 namespace CHPEditor
 {
-    internal class CHPFile : IDisposable
+    public class CHPFile : IDisposable
     {
         public enum ColorKeyType
         {
@@ -168,8 +168,8 @@ namespace CHPEditor
             }
         }
 
-        public string CharName,
-            Artist;
+        public string CharName = "";
+        public string Artist = "";
         public string CharFile { get; protected set; }
         public BitmapData CharBMP,
             CharBMP2P,
@@ -435,11 +435,14 @@ namespace CHPEditor
                                 if (RectCollection == null)
                                 {
                                     RectCollection = new Rectangle<int>[Data * Data];
+                                    RectComments = new string[Data * Data];
                                     
                                     for (int i = 0; i < RectCollection.Length; i++)
+                                    {
                                         RectCollection[i] = new Rectangle<int>(0,0,0,0);
+                                        RectComments[i] = "";
+                                    }
                                 }
-                                if (RectComments == null) { RectComments = new string[Data * Data]; }
 
                                 if (IsLegacy && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
                                 {
@@ -675,6 +678,8 @@ namespace CHPEditor
             if ((AutoColorSet && bitmap.ColorKeyType == ColorKeyType.Auto) ||
                 bitmap.ColorKeyType == ColorKeyType.Manual)
                 bitmap.ImageFile.Draw(rect, offset, rot, alpha, bitmap.ColorKey.R / 255.0f, bitmap.ColorKey.G / 255.0f, bitmap.ColorKey.B / 255.0f, bitmap.ColorKey.A / 255.0f);
+            else if (!AutoColorSet && bitmap.ColorKeyType == ColorKeyType.Auto) // If a typically color keyed bitmap is not automatically color keyed, assume its color key is pure black.
+                bitmap.ImageFile.Draw(rect, offset, rot, alpha, 0, 0, 0, 1);
             else
                 bitmap.ImageFile.Draw(rect, offset, rot, alpha);
         }

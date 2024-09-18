@@ -10,7 +10,6 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using System.Text;
 using System.Reflection;
-using System.Xml.Linq;
 
 namespace CHPEditor
 {
@@ -42,8 +41,8 @@ namespace CHPEditor
         // time-keeping stuff
         public static double tick = 0;
         public static bool pause = false;
-        public static int currentframe = 0;
-        public static int currenttime = 0;
+        //public static int currentframe = 0;
+        //public static int currenttime = 0;
 
         // CHP stuff
         public static CHPFile ChpFile;
@@ -150,8 +149,8 @@ namespace CHPEditor
             _gl.ClearColor(0.78f, 0.78f, 1f, 1f);
 
             IInputContext input = _window.CreateInput();
-            for (int i = 0; i < input.Keyboards.Count; i++)
-                input.Keyboards[i].KeyDown += KeyDown;
+
+            for (int i = 0; i < input.Mice.Count; i++) { input.Mice[i].Scroll += MouseScroll; }
 
             _controller = new ImGuiController(_gl, _window, input);
             IO = ImGui.GetIO();
@@ -291,10 +290,17 @@ void main()
             key_loc = _gl.GetUniformLocation(_program, "fragColorKey");
 
             ChpFile = new CHPFile(Config.Path);
+            ImGuiManager.Initialize();
+            ImGuiManager.UpdateCHPStats();
         }
+
         static void Update(double deltaTime)
         {
-            if (!pause) tick += deltaTime * 1000;
+            if (!pause)
+                tick += deltaTime * 1000;
+            if (ChpFile.Loaded)
+                Timeline.Update(ref ChpFile.AnimeCollection[anishow-1], ChpFile.Anime, tick);
+
             _controller.Update((float)deltaTime);
         }
         static void Render(double deltaTime)
@@ -342,9 +348,19 @@ void main()
         {
             _gl.Viewport(size);
         }
-        static void KeyDown(IKeyboard keyboard, Key key, int value)
+        // Inputs
+        private static void MouseScroll(IMouse mouse, ScrollWheel scroll)
         {
-            
+            if (!ImGui.IsWindowHovered(ImGuiHoveredFlags.AnyWindow)) 
+            {
+                float value = scroll.Y / 10.0f;
+                ImGuiManager.BackgroundZoom += value;
+                if (ImGuiManager.BackgroundZoom + value >= 0.1f)
+                    ImGuiManager.BackgroundOffset += new System.Numerics.Vector2(
+                        (_window.Size.X / 2) * -value,
+                        (_window.Size.Y / 2) * -value
+                        );
+            }
         }
         // Texture Drawing
         static void RenderTex(CHPFile.BitmapData data)
@@ -365,6 +381,14 @@ void main()
                 {
                     ChpFile.Draw(ref data);
                 }
+
+                if (ChpFile.RectCollection.Length > 0 && (bmpshow == 1 || bmpshow == 2 || bmpshow == 7 || bmpshow == 8))
+                    ImGuiManager.ShowRectHighlight(ChpFile.RectCollection[ImGuiManager.SelectedRect]);
+                else if (bmpshow == 3 || bmpshow == 4)
+                { 
+                    ImGuiManager.ShowRectHighlight(ChpFile.CharFaceAllSize);
+                    ImGuiManager.ShowRectHighlight(ChpFile.CharFaceUpperSize);
+                }
             }
         }
         static void RenderAnimation()
@@ -377,33 +401,35 @@ void main()
 
                     #region Update Frame
                     // Get the current frame
-                    if (ChpFile.AnimeCollection[state].Frame > 0)
-                    {
-                        if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
-                        {
-                            int loop = Math.Clamp(ChpFile.AnimeCollection[state].Loop, 0, ChpFile.AnimeCollection[state].FrameCount - 1);
-                            currentframe = (((int)tick / ChpFile.AnimeCollection[state].Frame) % (ChpFile.AnimeCollection[state].FrameCount - loop)) + ChpFile.AnimeCollection[state].Loop;
-                            currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * (ChpFile.AnimeCollection[state].FrameCount - loop)) + (ChpFile.AnimeCollection[state].Frame * loop));
-                        }
-                        else
-                        {
-                            currentframe = ((int)tick / ChpFile.AnimeCollection[state].Frame) % ChpFile.AnimeCollection[state].FrameCount;
-                            currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * ChpFile.AnimeCollection[state].FrameCount));
-                        }
-                    }
-                    else
-                    {
-                        if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
-                        {
-                            currentframe = ((int)tick / ChpFile.Anime) % (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop) + ChpFile.AnimeCollection[state].Loop;
-                            currenttime = ((int)tick % (ChpFile.Anime * (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop)) + (ChpFile.Anime * ChpFile.AnimeCollection[state].Loop));
-                        }
-                        else
-                        {
-                            currentframe = ((int)tick / ChpFile.Anime) % ChpFile.AnimeCollection[state].FrameCount;
-                            currenttime = ((int)tick % (ChpFile.Anime * ChpFile.AnimeCollection[state].FrameCount));
-                        }
-                    }
+                    //if (ChpFile.AnimeCollection[state].Frame > 0)
+                    //{
+                    //    if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
+                    //    {
+                    //        int loop = Math.Clamp(ChpFile.AnimeCollection[state].Loop, 0, ChpFile.AnimeCollection[state].FrameCount - 1);
+                    //        currentframe = (((int)tick / ChpFile.AnimeCollection[state].Frame) % (ChpFile.AnimeCollection[state].FrameCount - loop)) + ChpFile.AnimeCollection[state].Loop;
+                    //        currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * (ChpFile.AnimeCollection[state].FrameCount - loop)) + (ChpFile.AnimeCollection[state].Frame * loop));
+                    //    }
+                    //    else
+                    //    {
+                    //        currentframe = ((int)tick / ChpFile.AnimeCollection[state].Frame) % ChpFile.AnimeCollection[state].FrameCount;
+                    //        currenttime = ((int)tick % (ChpFile.AnimeCollection[state].Frame * ChpFile.AnimeCollection[state].FrameCount));
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    if (ChpFile.AnimeCollection[state].Loop > 0 && useLoop)
+                    //    {
+                    //        currentframe = ((int)tick / ChpFile.Anime) % (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop) + ChpFile.AnimeCollection[state].Loop;
+                    //        currenttime = ((int)tick % (ChpFile.Anime * (ChpFile.AnimeCollection[state].FrameCount - ChpFile.AnimeCollection[state].Loop)) + (ChpFile.Anime * ChpFile.AnimeCollection[state].Loop));
+                    //    }
+                    //    else
+                    //    {
+                    //        currentframe = ((int)tick / ChpFile.Anime) % ChpFile.AnimeCollection[state].FrameCount;
+                    //        currenttime = ((int)tick % (ChpFile.Anime * ChpFile.AnimeCollection[state].FrameCount));
+                    //    }
+                    //}
+                    int currentframe = Timeline.CurrentFrame;
+                    int currenttime = Timeline.CurrentTime;
                     #endregion
 
                     int anchor_x = (_window.FramebufferSize.X / 2) - (ChpFile.Size.Width / 2);
@@ -511,9 +537,8 @@ void main()
                         crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
                         crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
 
-                        // Quick fix
-                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
-                            crop_dst.Size = new Vector2D<int>(0, 0);
+                        // Skip drawing if any rects have zero width or zero height
+                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
@@ -607,6 +632,9 @@ void main()
                         offset.Origin.Y += anchor_y;
                         #endregion
 
+                        // Skip drawing if any rects have zero width or zero height
+                        if (sprite.Size.X <= 0 || sprite.Size.Y <= 0 || offset.Size.X <= 0 || offset.Size.Y <= 0) continue;
+
                         if (use2P && ChpFile.CharTex2P.Loaded)
                             ChpFile.Draw(ref ChpFile.CharTex2P, sprite, offset, rotation, alpha);
                         else
@@ -694,10 +722,9 @@ void main()
                         crop_dst.Origin.Y -= crop_amount.Origin.Y;
                         crop_dst.Size.X += crop_amount.Origin.X - crop_amount.Size.X;
                         crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
-
-                        // Quick fix
-                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0)
-                            crop_dst.Size = new Vector2D<int>(0, 0);
+                        
+                        // Skip drawing if any rects have zero width or zero height
+                        if (crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
@@ -705,12 +732,20 @@ void main()
                         else
                             ChpFile.Draw(ref ChpFile.CharBMP, crop_rect, crop_dst);
                     }
+
+                    if (ChpFile.RectCollection.Length > 0)
+                    {
+                        var highlight_rect = ChpFile.RectCollection[ImGuiManager.SelectedRect];
+                        highlight_rect.Origin.X += anchor_x;
+                        highlight_rect.Origin.Y += anchor_y;
+                            ImGuiManager.ShowRectHighlight(highlight_rect);
+                    }
                 }
                 else if (anishow != anistate)
                 {
                     Trace.TraceWarning("State #" + anishow + " is not loaded. Nothing will be displayed.");
                     anistate = anishow;
-                }
+                }            
         }
     }
 }

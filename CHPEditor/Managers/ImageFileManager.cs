@@ -5,7 +5,7 @@ using StbImageSharp;
 
 namespace CHPEditor
 {
-    internal class ImageFileManager : ImageManager
+    public class ImageFileManager : ImageManager
     {
         /// <summary>
         /// The path that is requested when first initializing. Actual path may differ if initialized with case-insensitivity.<br/>

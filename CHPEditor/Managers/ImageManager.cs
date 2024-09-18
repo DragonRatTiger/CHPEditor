@@ -7,7 +7,7 @@ using StbImageSharp;
 
 namespace CHPEditor
 {
-    internal class ImageManager : IDisposable
+    public class ImageManager : IDisposable
     {
         public bool Loaded = false;
 
@@ -57,17 +57,28 @@ namespace CHPEditor
 
             Loaded = true;
         }
-
+        public unsafe void UpdateImage(byte[] data)
+        {
+            Image.Data = data;
+            LoadImage();
+        }
+        public unsafe void Draw(int x, int y)
+        {
+            Rectangle<int> rect = new Rectangle<int>(0,0,Image.Width,Image.Height);
+            Rectangle<int> offset = new Rectangle<int>(x,y,rect.Size);
+            Draw(rect, offset);
+        }
+        public unsafe void Draw(Rectangle<int> rect, Rectangle<int> offset) { Draw(rect, offset, 0.0, 1.0f); }
         public unsafe void Draw(Rectangle<int> rect, Rectangle<int> offset, double rot, float alpha, float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f)
         {
             float RectX = (float)rect.Origin.X / Image.Width;
             float RectY = (float)rect.Origin.Y / Image.Height;
             float RectW = (float)rect.Size.X / Image.Width;
             float RectH = (float)rect.Size.Y / Image.Height;
-            float OffX = (float)offset.Origin.X / 100.0f;
-            float OffY = (float)offset.Origin.Y / 100.0f;
-            float OffW = (float)offset.Size.X / 100.0f;
-            float OffH = (float)offset.Size.Y / 100.0f;
+            float OffX = ((float)offset.Origin.X * ImGuiManager.BackgroundZoom + ImGuiManager.BackgroundOffset.X) / 100.0f;
+            float OffY = ((float)offset.Origin.Y * ImGuiManager.BackgroundZoom + ImGuiManager.BackgroundOffset.Y) / 100.0f;
+            float OffW = ((float)offset.Size.X * ImGuiManager.BackgroundZoom) / 100.0f;
+            float OffH = ((float)offset.Size.Y * ImGuiManager.BackgroundZoom) / 100.0f;
 
             // Fix non-uniform viewports creating warped rotations
             float viewportX = 100.0f / CHPEditor._window.FramebufferSize.X;
