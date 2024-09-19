@@ -383,11 +383,11 @@ void main()
                 }
 
                 if (ChpFile.RectCollection.Length > 0 && (bmpshow == 1 || bmpshow == 2 || bmpshow == 7 || bmpshow == 8))
-                    ImGuiManager.ShowRectHighlight(ChpFile.RectCollection[ImGuiManager.SelectedRect]);
+                    ImGuiManager.DrawHighlight(ChpFile.RectCollection[ImGuiManager.SelectedRect]);
                 else if (bmpshow == 3 || bmpshow == 4)
                 { 
-                    ImGuiManager.ShowRectHighlight(ChpFile.CharFaceAllSize);
-                    ImGuiManager.ShowRectHighlight(ChpFile.CharFaceUpperSize);
+                    ImGuiManager.DrawHighlight(ChpFile.CharFaceAllSize);
+                    ImGuiManager.DrawHighlight(ChpFile.CharFaceUpperSize);
                 }
             }
         }
@@ -738,7 +738,7 @@ void main()
                         var highlight_rect = ChpFile.RectCollection[ImGuiManager.SelectedRect];
                         highlight_rect.Origin.X += anchor_x;
                         highlight_rect.Origin.Y += anchor_y;
-                            ImGuiManager.ShowRectHighlight(highlight_rect);
+                            ImGuiManager.DrawHighlight(highlight_rect);
                     }
                 }
                 else if (anishow != anistate)

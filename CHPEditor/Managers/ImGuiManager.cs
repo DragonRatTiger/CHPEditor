@@ -10,7 +10,7 @@ namespace CHPEditor
 {
     static class ImGuiManager
     {
-        public static ImageManager Highlight { get; private set; } = new ImageManager([0xff, 0x3c, 0xff, 0xff], 1, 1);
+        public static Highlighter Highlight { get; private set; } = new Highlighter(0xff, 0x3c, 0xff, 0xff);
         public static Vector4 Color = new Vector4(1.0f, 0.235f, 1.0f, 1.0f);
 
         public static bool ImGuiIsActive = false;
@@ -376,7 +376,7 @@ namespace CHPEditor
                         ImGui.Checkbox("Highlight Rect", ref HighlightRect);
                         if (HighlightRect)
                             if (ImGui.ColorPicker4("Highlight Color", ref Color, ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.DisplayHex))
-                                Highlight.UpdateImage([(byte)(Color.X * 255), (byte)(Color.Y * 255), (byte)(Color.Z * 255), (byte)(Color.W * 255)]);
+                                Highlight.UpdateColor((byte)(Color.X * 255), (byte)(Color.Y * 255), (byte)(Color.Z * 255), (byte)(Color.W * 255));
 
                             if (UsedRects.Length > 0)
                             {
@@ -402,7 +402,7 @@ namespace CHPEditor
                         ImGui.Checkbox("Highlight Rect", ref HighlightRect);
                         if (HighlightRect)
                             if (ImGui.ColorPicker4("Highlight Color", ref Color, ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.DisplayHex))
-                                Highlight.UpdateImage([(byte)(Color.X * 255), (byte)(Color.Y * 255), (byte)(Color.Z * 255), (byte)(Color.W * 255)]);
+                                Highlight.UpdateColor((byte)(Color.X * 255), (byte)(Color.Y * 255), (byte)(Color.Z * 255), (byte)(Color.W * 255));
 
                         ImGui.Text("CharFaceAllSize");
                         bool input = ImGui.InputInt("X", ref CHPEditor.ChpFile.CharFaceAllSize.Origin.X);
@@ -573,27 +573,7 @@ namespace CHPEditor
                 }
             }
         }
-
-        public static void ShowRectHighlight(Rectangle<int> rect)
-        {
-            if (!HighlightRect || (rect.Size.X <= 0 && rect.Size.Y <= 0)) return;
-
-            if (rect.Size.X > 0 && rect.Size.Y > 0)
-            {
-                var pos = new Rectangle<int>(0, 0, 1, 1);
-                var offset = new Rectangle<int>(rect.Origin.X - 1, rect.Origin.Y - 1, rect.Size.X + 2, 1);
-                Highlight.Draw(pos, offset);
-                offset = new Rectangle<int>(rect.Origin.X - 1, rect.Origin.Y - 1, 1, rect.Size.Y + 2);
-                Highlight.Draw(pos, offset);
-                offset = new Rectangle<int>(rect.Max.X, rect.Origin.Y, 1, rect.Size.Y + 1);
-                Highlight.Draw(pos, offset);
-                offset = new Rectangle<int>(rect.Origin.X, rect.Max.Y, rect.Size.X + 1, 1);
-                Highlight.Draw(pos, offset);
-
-                offset = new Rectangle<int>(rect.Origin.X, rect.Origin.Y, rect.Size.X, rect.Size.Y);
-                Highlight.Draw(pos, offset, 0.0, 0.25f);
-            }
-        }
+        public static void DrawHighlight(Rectangle<int> rect) { if (HighlightRect) Highlight.Draw(rect); }
         static Vector2 RatioFromWindowSize(float ratio_x, float ratio_y)
         {
             return new Vector2(CHPEditor._window.Size.X * ratio_x, (CHPEditor._window.Size.Y - 21) * ratio_y);
