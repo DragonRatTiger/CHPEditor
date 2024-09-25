@@ -36,7 +36,7 @@ namespace CHPEditor
 
         public void Draw(Rectangle<int> rect)
         {
-            if (rect.Size.X > 0 && rect.Size.Y > 0) return;
+            if (rect.Size.X <= 0 || rect.Size.Y <= 0) return;
 
             var pos = new Rectangle<int>(0, 0, 1, 1);
             var offset = new Rectangle<int>(rect.Origin.X - 1, rect.Origin.Y - 1, rect.Size.X + 2, 1);
