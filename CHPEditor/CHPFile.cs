@@ -112,6 +112,8 @@ namespace CHPEditor
                 public int End { get { return Start + Length; } }
                 public int StartIndex;
                 public int EndIndex;
+
+                public bool IsWithinTimeframe(int time) { return time >= Start && time <= End; }
             }
             public struct PatternData
             {
