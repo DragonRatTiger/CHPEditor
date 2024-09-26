@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO.Compression;
+using ImGuiNET;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using StbImageSharp;
@@ -142,6 +143,19 @@ namespace CHPEditor
             CHPEditor._gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, (void*)0);
 
             CHPEditor._gl.Uniform1(CHPEditor.alpha_loc, 1.0f);
+        }
+
+        public void DrawForImGui() { DrawForImGui(0, 0, Image.Width, Image.Height); }
+        public void DrawForImGui(int x, int y) { DrawForImGui(x, y, Image.Width, Image.Height); }
+        public void DrawForImGui(Rectangle<int> rect) { DrawForImGui(rect, rect.Size); }
+        public void DrawForImGui(Rectangle<int> rect, Vector2D<int> size) { DrawForImGui(rect.Origin.X, rect.Origin.Y, rect.Size.X, rect.Size.Y, size.X, size.Y); }
+        public void DrawForImGui(int x, int y, int w, int h) { DrawForImGui(x, y, w, h, w, h); }
+        public void DrawForImGui(int x, int y, int w, int h, int size_w, int size_h)
+        {
+            System.Numerics.Vector2 pos = new System.Numerics.Vector2((float)x / Image.Width, (float)y / Image.Height);
+            System.Numerics.Vector2 size = new System.Numerics.Vector2((float)(x + w) / Image.Width, (float)(y + h) / Image.Height);
+
+            ImGui.Image((nint)Pointer, new System.Numerics.Vector2(size_w, size_h), pos, size);
         }
 
         #region Dispose
