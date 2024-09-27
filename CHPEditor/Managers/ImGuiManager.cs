@@ -726,9 +726,8 @@ namespace CHPEditor
                             }
                             else
                             {
-                                if (ImGui.InputInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect))
+                                if (ImGui.SliderInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect, 0, 255, $"{Math.Round(((float)currentrect / 256) * 360.0f, 1)}°"))
                                 {
-                                    currentrect = int.Clamp(currentrect, 0, 255);
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation[CurrentFrame] = currentrect;
                                 }
                             }
