@@ -513,7 +513,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Sprite", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_PATTERN_SPRITE_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
                             }
                             else
                             {
@@ -535,7 +540,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_PATTERN_OFFSET_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
@@ -586,7 +596,7 @@ namespace CHPEditor
                         #region Texture
                         if (TextureNames.Length > 0)
                         {
-                            string inter_placeholder_text = "[Interpolating animation]";
+                            string inter_placeholder_text = "(Interpolated animation)";
                             ImGui.SeparatorText("Textures");
 
                             if (ImGui.BeginCombo($"Textures ({TextureNames.Length})", TextureNames[SelectedTexture]))
@@ -625,7 +635,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Sprite", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_TEXTURE_SPRITE_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
                             }
                             else
                             {
@@ -648,7 +663,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_TEXTURE_OFFSET_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
                             }
                             else if (!offset_isused)
                             {
@@ -842,7 +862,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite###ANIMATION_LAYER_SPRITE", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Sprite###ANIMATION_LAYER_SPRITE", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_LAYER_SPRITE_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
                             }
                             else
                             {
@@ -864,7 +889,12 @@ namespace CHPEditor
                             if (isinterpolating)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolating animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_LAYER_OFFSET_RECT"))
+                                {
+                                    InterpolateRectCombo();
+                                    ImGui.TreePop();
+                                }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
@@ -1179,6 +1209,15 @@ namespace CHPEditor
                 CHPEditor.ChpFile.RectCollection[selected].Size.Y = int.Clamp(CHPEditor.ChpFile.RectCollection[selected].Size.Y, 0, int.MaxValue);
                 UpdateUsedRect(selected);
             }
+        }
+        static void InterpolateRectCombo()
+        {
+            string fake = "";
+            ImGui.InputTextWithHint("Label", "(Interpolated animation)", ref fake, 1);
+            ImGui.InputTextWithHint("X", "(Interpolated animation)", ref fake, 1);
+            ImGui.InputTextWithHint("Y", "(Interpolated animation)", ref fake, 1);
+            ImGui.InputTextWithHint("W", "(Interpolated animation)", ref fake, 1);
+            ImGui.InputTextWithHint("H", "(Interpolated animation)", ref fake, 1);
         }
 
         public static void DrawHighlight(Rectangle<int> rect) { if (HighlightRect) Highlight.Draw(rect); }
