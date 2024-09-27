@@ -62,7 +62,9 @@ namespace CHPEditor
             {
                 if (ImGui.BeginMenu("File###MENU_FILE"))
                 {
-                    ImGui.MenuItem("New###MENU_FILE_NEW", "CTRL+N");
+                    ImGui.MenuItem("New###MENU_FILE_NEW", "CTRL+N", false, false);
+                    ImGui.MenuItem("Open###MENU_FILE_OPEN", "CTRL+O", false, false);
+                    ImGui.MenuItem("Save###MENU_FILE_SAVE", "CTRL+S", false, false);
                     ImGui.EndMenu();
                 }
 
@@ -390,19 +392,7 @@ namespace CHPEditor
                         {
                             ImGui.SeparatorText("Rect");
 
-                            // Weird setup to ensure any inputs after the currently modifying input don't vanish
-                            bool input = ImGui.InputText("Label", ref CHPEditor.ChpFile.RectComments[SelectedRect], 1024);
-                            input = ImGui.InputInt("X", ref CHPEditor.ChpFile.RectCollection[SelectedRect].Origin.X, 1, 10) || input;
-                            input = ImGui.InputInt("Y", ref CHPEditor.ChpFile.RectCollection[SelectedRect].Origin.Y, 1, 10) || input;
-                            input = ImGui.InputInt("W", ref CHPEditor.ChpFile.RectCollection[SelectedRect].Size.X, 1, 10) || input;
-                            input = ImGui.InputInt("H", ref CHPEditor.ChpFile.RectCollection[SelectedRect].Size.Y, 1, 10) || input;
-
-                            if (input)
-                            {
-                                CHPEditor.ChpFile.RectCollection[SelectedRect].Size.X = int.Clamp(CHPEditor.ChpFile.RectCollection[SelectedRect].Size.X, 0, int.MaxValue);
-                                CHPEditor.ChpFile.RectCollection[SelectedRect].Size.Y = int.Clamp(CHPEditor.ChpFile.RectCollection[SelectedRect].Size.Y, 0, int.MaxValue);
-                                UpdateUsedRect(SelectedRect);
-                            }
+                            RectCombo(SelectedRect);
                         }
                     }
                     else if (CHPEditor.bmpshow == 3 || CHPEditor.bmpshow == 4) // CharFace
@@ -528,6 +518,11 @@ namespace CHPEditor
                             else
                             {
                                 SpriteCombo("Sprite###ANIMATION_PATTERN_SPRITE", ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame]);
+                                if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_PATTERN_SPRITE_RECT"))
+                                {
+                                    RectCombo(currentrect);
+                                    ImGui.TreePop();
+                                }
                             }
                             ImGui.EndDisabled();
                             #endregion
@@ -571,6 +566,11 @@ namespace CHPEditor
                                 OffsetCombo("Offset###ANIMATION_PATTERN_OFFSET",
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame],
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Offset[CurrentFrame]);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_PATTERN_OFFSET_RECT"))
+                                {
+                                    RectCombo(currentrect_offset);
+                                    ImGui.TreePop();
+                                }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
@@ -632,6 +632,11 @@ namespace CHPEditor
                                 SpriteCombo("Sprite###ANIMATION_TEXTURE_SPRITE",
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame],
                                     true);
+                                if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_TEXTURE_SPRITE_RECT"))
+                                {
+                                    RectCombo(currentrect);
+                                    ImGui.TreePop();
+                                }
                             }
                             ImGui.EndDisabled();
                             #endregion
@@ -655,6 +660,11 @@ namespace CHPEditor
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame],
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset[CurrentFrame],
                                     true);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_TEXTURE_OFFSET_RECT"))
+                                {
+                                    RectCombo(currentrect_offset);
+                                    ImGui.TreePop();
+                                }
                             }
                             ImGui.EndDisabled();
                             #endregion
@@ -837,6 +847,11 @@ namespace CHPEditor
                             else
                             {
                                 SpriteCombo("Sprite###ANIMATION_LAYER_SPRITE", ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame]);
+                                if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_LAYER_SPRITE_RECT"))
+                                {
+                                    RectCombo(currentrect);
+                                    ImGui.TreePop();
+                                }
                             }
                             ImGui.EndDisabled();
                             #endregion
@@ -880,6 +895,11 @@ namespace CHPEditor
                                 OffsetCombo("Offset###ANIMATION_LAYER_OFFSET",
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame],
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Offset[CurrentFrame]);
+                                if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_LAYER_OFFSET_RECT"))
+                                {
+                                    RectCombo(currentrect_offset);
+                                    ImGui.TreePop();
+                                }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
@@ -1023,7 +1043,7 @@ namespace CHPEditor
             var rect = CHPEditor.ChpFile.RectCollection[sprite_index];
             var offset = CHPEditor.ChpFile.RectCollection[offset_index];
 
-            //if (rect.Size.X <= 0 || rect.Size.Y <= 0 || offset.Size.X <= 0 || offset.Size.Y <= 0) return;
+            bool not_drawable = (rect.Size.X <= 0 || rect.Size.Y <= 0 || offset.Size.X <= 0 || offset.Size.Y <= 0);
 
             if (ImGui.IsItemHovered())
             {
@@ -1034,26 +1054,30 @@ namespace CHPEditor
                 if (use_tex)
                 {
                     if (use2P && CHPEditor.ChpFile.CharTex2P.Loaded)
-                    { 
-                        CHPEditor.ChpFile.CharTex2P.ImageFile.DrawForImGui(rect, offset.Size);
+                    {
+                        if (!not_drawable)
+                            CHPEditor.ChpFile.CharTex2P.ImageFile.DrawForImGui(rect, offset.Size);
                         bounds_crossed = CHPEditor.ChpFile.CharTex2P.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharTex2P.ImageFile.Image.Height < rect.Max.Y;
                     }
                     else if (CHPEditor.ChpFile.CharTex.Loaded)
-                    { 
-                        CHPEditor.ChpFile.CharTex.ImageFile.DrawForImGui(rect, offset.Size);
+                    {
+                        if (!not_drawable)
+                            CHPEditor.ChpFile.CharTex.ImageFile.DrawForImGui(rect, offset.Size);
                         bounds_crossed = CHPEditor.ChpFile.CharTex.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharTex.ImageFile.Image.Height < rect.Max.Y;
                     }
                 }
                 else
                 {
                     if (use2P && CHPEditor.ChpFile.CharBMP2P.Loaded)
-                    { 
-                        CHPEditor.ChpFile.CharBMP2P.ImageFile.DrawForImGui(rect, offset.Size);
+                    {
+                        if (!not_drawable)
+                            CHPEditor.ChpFile.CharBMP2P.ImageFile.DrawForImGui(rect, offset.Size);
                         bounds_crossed = CHPEditor.ChpFile.CharBMP2P.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharBMP2P.ImageFile.Image.Height < rect.Max.Y;
                     }
                     else if (CHPEditor.ChpFile.CharBMP.Loaded)
-                    { 
-                        CHPEditor.ChpFile.CharBMP.ImageFile.DrawForImGui(rect, offset.Size);
+                    {
+                        if (!not_drawable)
+                            CHPEditor.ChpFile.CharBMP.ImageFile.DrawForImGui(rect, offset.Size);
                         bounds_crossed = CHPEditor.ChpFile.CharBMP.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharBMP.ImageFile.Image.Height < rect.Max.Y;
                     }
                 }
@@ -1137,6 +1161,23 @@ namespace CHPEditor
             {
                 BMPTooltip(currentrect, currentrect_offset, CHPEditor.use2P, true, use_tex);
                 DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[currentrect_offset]);
+            }
+        }
+
+        static void RectCombo(int selected)
+        {
+            // Weird setup to ensure any inputs after the currently modifying input don't vanish
+            bool input = ImGui.InputText("Label", ref CHPEditor.ChpFile.RectComments[selected], 1024);
+            input = ImGui.InputInt("X", ref CHPEditor.ChpFile.RectCollection[selected].Origin.X, 1, 10) || input;
+            input = ImGui.InputInt("Y", ref CHPEditor.ChpFile.RectCollection[selected].Origin.Y, 1, 10) || input;
+            input = ImGui.InputInt("W", ref CHPEditor.ChpFile.RectCollection[selected].Size.X, 1, 10) || input;
+            input = ImGui.InputInt("H", ref CHPEditor.ChpFile.RectCollection[selected].Size.Y, 1, 10) || input;
+
+            if (input)
+            {
+                CHPEditor.ChpFile.RectCollection[selected].Size.X = int.Clamp(CHPEditor.ChpFile.RectCollection[selected].Size.X, 0, int.MaxValue);
+                CHPEditor.ChpFile.RectCollection[selected].Size.Y = int.Clamp(CHPEditor.ChpFile.RectCollection[selected].Size.Y, 0, int.MaxValue);
+                UpdateUsedRect(selected);
             }
         }
 
