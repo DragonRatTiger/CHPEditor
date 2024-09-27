@@ -679,7 +679,8 @@ namespace CHPEditor
                                 OffsetCombo("Offset###ANIMATION_TEXTURE_OFFSET",
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame],
                                     ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset[CurrentFrame],
-                                    true);
+                                    true,
+                                    rotation_isused ? CHPFile.GetRotation(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation[CurrentFrame]) : 0);
                                 if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_TEXTURE_OFFSET_RECT"))
                                 {
                                     RectCombo(currentrect_offset);
@@ -726,7 +727,7 @@ namespace CHPEditor
                             }
                             else
                             {
-                                if (ImGui.SliderInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect, 0, 255, $"{Math.Round(((float)currentrect / 256) * 360.0f, 1)}°"))
+                                if (ImGui.SliderInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect, 0, 255, $"{Math.Round(((float)currentrect / 256) * 360.0f, 1)}° ({currentrect}/255)"))
                                 {
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation[CurrentFrame] = currentrect;
                                 }
@@ -1169,7 +1170,7 @@ namespace CHPEditor
                     DrawHighlight(CHPEditor.ChpFile.RectCollection[currentrect]);
             }
         }
-        static void OffsetCombo(string label, ref int currentrect, ref int currentrect_offset, bool use_tex = false)
+        static void OffsetCombo(string label, ref int currentrect, ref int currentrect_offset, bool use_tex = false, double rot = 0.0)
         {
             if (ImGui.BeginCombo(label, currentrect_offset > -1 ? UsedRectsPreview[currentrect_offset] : "???"))
             {
@@ -1180,7 +1181,7 @@ namespace CHPEditor
                     if (currentrect > -1)
                     {
                         BMPTooltip(currentrect, i, CHPEditor.use2P, true, use_tex);
-                        DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[i]);
+                        DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[i], rot);
                     }
                 }
                 ImGui.EndCombo();
@@ -1189,7 +1190,7 @@ namespace CHPEditor
             if (currentrect > -1 && currentrect_offset > -1)
             {
                 BMPTooltip(currentrect, currentrect_offset, CHPEditor.use2P, true, use_tex);
-                DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[currentrect_offset]);
+                DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[currentrect_offset], rot);
             }
         }
 
@@ -1219,8 +1220,8 @@ namespace CHPEditor
             ImGui.InputTextWithHint("H", "(Interpolated animation)", ref fake, 1);
         }
 
-        public static void DrawHighlight(Rectangle<int> rect) { if (HighlightRect) Highlight.Draw(rect); }
-        static void DrawAnimationHighlight(Rectangle<int> rect)
+        public static void DrawHighlight(Rectangle<int> rect, double rot = 0.0) { if (HighlightRect) Highlight.Draw(rect, rot); }
+        static void DrawAnimationHighlight(Rectangle<int> rect, double rot = 0.0)
         {
             if (!CHPEditor.anitoggle) return;
             if (ImGui.IsItemHovered())
@@ -1229,7 +1230,7 @@ namespace CHPEditor
                 int anchor_y = (CHPEditor._window.FramebufferSize.Y / 2) - (CHPEditor.ChpFile.Size.Height / 2);
                 var offset = new Rectangle<int>(anchor_x, anchor_y, 0, 0);
                 offset = offset.Add(rect);
-                DrawHighlight(offset);
+                DrawHighlight(offset, rot);
             }
         }
 

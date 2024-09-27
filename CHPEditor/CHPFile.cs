@@ -686,6 +686,9 @@ namespace CHPEditor
                 bitmap.ImageFile.Draw(rect, offset, rot, alpha);
         }
         #endregion
+
+        public static double GetRotation(int value) { return ((double)value / 256) * 360.0; }
+
         #region Dispose
         private bool isDisposed;
         protected virtual void Dispose(bool disposing)

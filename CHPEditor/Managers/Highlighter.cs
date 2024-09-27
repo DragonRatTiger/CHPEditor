@@ -34,7 +34,7 @@ namespace CHPEditor
             Highlight.UpdateImage([Color.R, Color.G, Color.B, Color.A]);
         }
 
-        public void Draw(Rectangle<int> rect)
+        public void Draw(Rectangle<int> rect, double rot = 0.0)
         {
             if (rect.Size.X <= 0 || rect.Size.Y <= 0) return;
 
@@ -49,7 +49,7 @@ namespace CHPEditor
             Highlight.Draw(pos, offset);
 
             offset = new Rectangle<int>(rect.Origin.X, rect.Origin.Y, rect.Size.X, rect.Size.Y);
-            Highlight.Draw(pos, offset, 0.0, 0.25f);            
+            Highlight.Draw(pos, offset, rot, 0.25f);            
         }
     }
 }
