@@ -366,17 +366,17 @@ namespace CHPEditor
                                     SelectedRect = i;
 
                                 if (CHPEditor.bmpshow == 1 || CHPEditor.bmpshow == 2) // CharBMP
-                                    BMPTooltip(i, CHPEditor.bmpshow == 2);
+                                    BMPTooltip(i, CHPEditor.bmpshow == 2 || (CHPEditor.anitoggle && CHPEditor.use2P));
                                 else if (CHPEditor.bmpshow == 7 || CHPEditor.bmpshow == 8) //CharTex
-                                    BMPTooltip(i, CHPEditor.bmpshow == 8, true);
+                                    BMPTooltip(i, CHPEditor.bmpshow == 8 || (CHPEditor.anitoggle && CHPEditor.use2P), true);
                             }
                             ImGui.EndCombo();
                         }
 
                         if (CHPEditor.bmpshow == 1 || CHPEditor.bmpshow == 2) // CharBMP
-                            BMPTooltip(SelectedRect, CHPEditor.bmpshow == 2);
+                            BMPTooltip(SelectedRect, CHPEditor.bmpshow == 2 || (CHPEditor.anitoggle && CHPEditor.use2P));
                         else if (CHPEditor.bmpshow == 7 || CHPEditor.bmpshow == 8) //CharTex
-                            BMPTooltip(SelectedRect, CHPEditor.bmpshow == 8, true);
+                            BMPTooltip(SelectedRect, CHPEditor.bmpshow == 8 || (CHPEditor.anitoggle && CHPEditor.use2P), true);
 
                         if (ImGui.TreeNodeEx("Highlight###HIGHLIGHT", ImGuiTreeNodeFlags.Framed))
                         {
@@ -727,7 +727,7 @@ namespace CHPEditor
                             }
                             else
                             {
-                                if (ImGui.SliderInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect, 0, 255, $"{Math.Round(((float)currentrect / 256) * 360.0f, 1)}° ({currentrect}/255)"))
+                                if (ImGui.SliderInt("Rotation###ANIMATION_TEXTURE_ROTATION", ref currentrect, 0, 255, $"{Math.Round(CHPFile.GetRotation(currentrect), 1)}° ({currentrect}/255)"))
                                 {
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation[CurrentFrame] = currentrect;
                                 }
