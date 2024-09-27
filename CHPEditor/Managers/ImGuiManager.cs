@@ -3,7 +3,6 @@ using Silk.NET.Maths;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -491,7 +490,22 @@ namespace CHPEditor
                         {
                             ImGui.SeparatorText("Patterns");
 
-                            ImGui.Combo($"Patterns ({PatternNames.Length})", ref SelectedPattern, PatternNames, PatternNames.Length);
+                            if (ImGui.BeginCombo($"Patterns ({PatternNames.Length})", PatternNames[SelectedPattern]))
+                            {
+                                for (int i = 0; i < PatternNames.Length; i++)
+                                {
+                                    if (ImGui.Selectable(PatternNames[i], i == SelectedPattern)) SelectedPattern = i;
+                                    if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Sprite[CurrentFrame] > -1)
+                                    {
+                                        BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Sprite[CurrentFrame], CHPEditor.use2P);
+                                    }
+                                }
+                                ImGui.EndCombo();
+                            }
+                            if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame] > -1)
+                            {
+                                BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame], CHPEditor.use2P);
+                            }
 
                             bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame];
@@ -575,7 +589,22 @@ namespace CHPEditor
                             string inter_placeholder_text = "[Interpolating animation]";
                             ImGui.SeparatorText("Textures");
 
-                            ImGui.Combo($"Textures ({TextureNames.Length})", ref SelectedTexture, TextureNames, TextureNames.Length);
+                            if (ImGui.BeginCombo($"Textures ({TextureNames.Length})", TextureNames[SelectedTexture]))
+                            {
+                                for (int i = 0; i < TextureNames.Length; i++)
+                                {
+                                    if (ImGui.Selectable(TextureNames[i], i == SelectedTexture)) SelectedTexture = i;
+                                    if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Sprite[CurrentFrame] > -1)
+                                    {
+                                        BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Sprite[CurrentFrame], CHPEditor.use2P, true);
+                                    }
+                                }
+                                ImGui.EndCombo();
+                            }
+                            if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame] > -1)
+                            {
+                                BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame], CHPEditor.use2P, true);
+                            }
 
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame];
                             bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
@@ -770,7 +799,22 @@ namespace CHPEditor
                         {
                             ImGui.SeparatorText("Layers");
 
-                            ImGui.Combo($"Layers ({LayerNames.Length})", ref SelectedLayer, LayerNames, LayerNames.Length);
+                            if (ImGui.BeginCombo($"Layers ({LayerNames.Length})", LayerNames[SelectedLayer]))
+                            {
+                                for (int i = 0; i < LayerNames.Length; i++)
+                                {
+                                    if (ImGui.Selectable(LayerNames[i], i == SelectedLayer)) SelectedLayer = i;
+                                    if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Sprite[CurrentFrame] > -1)
+                                    {
+                                        BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Sprite[CurrentFrame], CHPEditor.use2P);
+                                    }
+                                }
+                                ImGui.EndCombo();
+                            }
+                            if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame] > -1)
+                            {
+                                BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame], CHPEditor.use2P);
+                            }
 
                             bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame];
@@ -1056,7 +1100,11 @@ namespace CHPEditor
                 {
                     if (ImGui.Selectable(UsedRectsPreview[i], i == currentrect))
                         currentrect = i;
+
                     BMPTooltip(i, CHPEditor.use2P, use_tex);
+
+                    if (!CHPEditor.anitoggle && ImGui.IsItemHovered())
+                        DrawHighlight(CHPEditor.ChpFile.RectCollection[i]);
                 }
                 ImGui.EndCombo();
             }
@@ -1064,6 +1112,8 @@ namespace CHPEditor
             if (currentrect > -1)
             {
                 BMPTooltip(currentrect, CHPEditor.use2P, use_tex);
+                if (!CHPEditor.anitoggle && ImGui.IsItemHovered())
+                    DrawHighlight(CHPEditor.ChpFile.RectCollection[currentrect]);
             }
         }
         static void OffsetCombo(string label, ref int currentrect, ref int currentrect_offset, bool use_tex = false)
@@ -1077,6 +1127,7 @@ namespace CHPEditor
                     if (currentrect > -1)
                     {
                         BMPTooltip(currentrect, i, CHPEditor.use2P, true, use_tex);
+                        DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[i]);
                     }
                 }
                 ImGui.EndCombo();
@@ -1085,10 +1136,24 @@ namespace CHPEditor
             if (currentrect > -1 && currentrect_offset > -1)
             {
                 BMPTooltip(currentrect, currentrect_offset, CHPEditor.use2P, true, use_tex);
+                DrawAnimationHighlight(CHPEditor.ChpFile.RectCollection[currentrect_offset]);
             }
         }
 
         public static void DrawHighlight(Rectangle<int> rect) { if (HighlightRect) Highlight.Draw(rect); }
+        static void DrawAnimationHighlight(Rectangle<int> rect)
+        {
+            if (!CHPEditor.anitoggle) return;
+            if (ImGui.IsItemHovered())
+            {
+                int anchor_x = (CHPEditor._window.FramebufferSize.X / 2) - (CHPEditor.ChpFile.Size.Width / 2);
+                int anchor_y = (CHPEditor._window.FramebufferSize.Y / 2) - (CHPEditor.ChpFile.Size.Height / 2);
+                var offset = new Rectangle<int>(anchor_x, anchor_y, 0, 0);
+                offset = offset.Add(rect);
+                DrawHighlight(offset);
+            }
+        }
+
         static Vector2 RatioFromWindowSize(float ratio_x, float ratio_y)
         {
             return new Vector2(CHPEditor._window.Size.X * ratio_x, (CHPEditor._window.Size.Y - 21) * ratio_y);
