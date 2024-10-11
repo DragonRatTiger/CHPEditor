@@ -220,6 +220,7 @@ namespace CHPEditor
                         bool containsComment = line.IndexOf("//") > -1;
                         string line_trimmed = line.Substring(0, containsComment ? line.IndexOf("//") : line.Length);
                         string[] split = line_trimmed.Split(new char[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (split.Length == 0) continue;
 
                         switch (split[0].ToLower())
                         {

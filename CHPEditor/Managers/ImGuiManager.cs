@@ -59,7 +59,7 @@ namespace CHPEditor
             Timeline.Clear();
 
             UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1]);
-            UpdateUsedRects();
+            UpdateCHPStats();
         }
         public static void Draw()
         {
