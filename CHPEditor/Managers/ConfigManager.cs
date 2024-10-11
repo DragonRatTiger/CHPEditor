@@ -35,7 +35,7 @@ namespace CHPEditor
 
             if (File.Exists(path))
             {
-                _encoding = HEncodingDetector.DetectEncoding(path, Encoding.ASCII);
+                _encoding = Encoding.UTF8;
                 string[] lines = File.ReadAllLines(path, _encoding);
                 foreach (string line in lines)
                 {

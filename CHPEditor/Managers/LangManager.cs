@@ -36,7 +36,7 @@ namespace CHPEditor
             Fonts = new List<(string, float, string[]?, string[]?)>();
 
             string langpath = Path.Combine("lang", Id, "lang.json");
-            string langjson = File.ReadAllText(langpath, HEncodingDetector.DetectEncoding(langpath, Encoding.UTF8));
+            string langjson = File.ReadAllText(langpath, Encoding.UTF8);
 
             JsonNodeOptions nodeOptions = new JsonNodeOptions() { PropertyNameCaseInsensitive = false };
             JsonDocumentOptions docOptions = new JsonDocumentOptions() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };

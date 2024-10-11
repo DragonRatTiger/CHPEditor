@@ -23,14 +23,8 @@ namespace CHPEditor
 
         public string FileName;
         public string FilePath;
-        public string FolderPath
-        {
-            get
-            {
-                return Path.GetDirectoryName(FilePath);
-            }
-        }
-        public Encoding FileEncoding { get; private set; }
+        public string FolderPath { get { return Path.GetDirectoryName(FilePath); } }
+        public Encoding FileEncoding { get; private set; } = Encoding.GetEncoding(932);
 
         public int Anime = 83; // Took a guess for this one, since some charas don't have #Anime defined. Need to look a bit more into this. (It's 12fps rounded down)
         public Size Size = new Size(121, 271); // Begin with 121,271 for legacy support. Modern pomyus are typically 167,271.
@@ -187,7 +181,7 @@ namespace CHPEditor
 
         public AnimeData[] AnimeCollection { get; protected set; }
         public InterpolateData[] InterpolateCollection { get; protected set; }
-        public CHPFile(string filename)
+        public CHPFile(string filename, Encoding? encoding = null)
         {
             Loaded = false;
             Error = "";
@@ -196,7 +190,8 @@ namespace CHPEditor
 
             try
             {
-                FileEncoding = HEncodingDetector.DetectEncoding(filename, Encoding.GetEncoding(932));
+                if (encoding != null) { FileEncoding = encoding; }
+                //FileEncoding = HEncodingDetector.DetectEncoding(filename, Encoding.GetEncoding(932));
 
                 string filedata = File.ReadAllText(filename, FileEncoding);
                 FileName = Path.GetFileName(filename);
@@ -378,11 +373,6 @@ namespace CHPEditor
                                     Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
                                     break;
                                 }
-                                //if (split.Length < 4)
-                                //{
-                                //    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes for offset. Offset is mandatory. Skipping this line.");
-                                //    break;
-                                //}
 
                                 int texture = int.Parse(split[1]) - 1;
                                 int texframe = AnimeCollection[texture].Frame > 0 ? AnimeCollection[texture].Frame : Anime;

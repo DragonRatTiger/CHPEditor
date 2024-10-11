@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 
 namespace CHPEditor
 {
@@ -137,6 +138,29 @@ namespace CHPEditor
             if (CHPEditor.ChpFile.Loaded)
             {
                 ImGui.Text(CHPEditor.Lang.GetValue("CHP_FILE_INFO", CHPEditor.ChpFile.FileName, CHPEditor.ChpFile.FileEncoding.WebName));
+
+                if (ImGui.BeginCombo("Encoding", CHPEditor.ChpFile.FileEncoding.EncodingName))
+                {
+                    foreach (var encodinginfo in HEncodingDetector.Encodings)
+                    {
+                        if (ImGui.Selectable(encodinginfo.DisplayName))
+                        {
+                            CHPEditor.ChpFile.Dispose();
+                            CHPEditor.ChpFile = new CHPFile(CHPEditor.Config.Path, encodinginfo.GetEncoding());
+                            Timeline.Clear();
+
+                            UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1]);
+                            UpdateUsedRects();
+                        }
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.BeginTooltip();
+                            ImGui.TextColored(new Vector4(1.0f, 0.5f, 0.5f, 1.0f), "WARNING: Some encodings may trigger a crash.\n\nThis drop-down exists as a temporary solution\nto a lack of an encoding detector.");
+                            ImGui.EndTooltip();
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
 
                 if (!string.IsNullOrEmpty(CHPEditor.ChpFile.CharName)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_NAME", CHPEditor.ChpFile.CharName));
                 if (!string.IsNullOrEmpty(CHPEditor.ChpFile.Artist)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_ARTIST", CHPEditor.ChpFile.Artist));
@@ -985,10 +1009,7 @@ namespace CHPEditor
             UsedRectsPreview = new string[CHPEditor.ChpFile.RectCollection.Length];
             SelectedRect = 0;
 
-            for (int i = 0; i < UsedRects.Length; i++)
-            {
-                UpdateUsedRect(i);
-            }
+            UpdateUsedRects();
         }
         public static void UpdateUsedRect(int index)
         {
@@ -998,6 +1019,13 @@ namespace CHPEditor
 
             UsedRects[index] = (rect != new Rectangle<int>(0, 0, 0, 0)) || !string.IsNullOrEmpty(CHPEditor.ChpFile.RectComments[index]);
             UsedRectsPreview[index] = UsedRects[index] ? info + numbers : info + " [Unused]";
+        }
+        public static void UpdateUsedRects()
+        {
+            for (int i = 0; i < UsedRects.Length; i++)
+            {
+                UpdateUsedRect(i);
+            }
         }
         public static void UpdateObjectNames(ref CHPFile.AnimeData data)
         {

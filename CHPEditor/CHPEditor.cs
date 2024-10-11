@@ -71,6 +71,7 @@ namespace CHPEditor
         static void Main(string[] args)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            HEncodingDetector.Encodings = Encoding.GetEncodings();
 
             Config = new ConfigManager("Config.ini");
             Lang = new LangManager(Config.Lang);
