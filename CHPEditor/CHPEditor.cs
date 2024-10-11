@@ -453,14 +453,9 @@ void main()
                     int bg_y = (Config.BackgroundSize.Height / 2) - (ChpFile.Size.Height / 2);
 
                     Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) };
+                    if (!Config.UseCharaSizeForBackground) { dst.Size = new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height); }
                     Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
                     Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(ChpFile.RectCollection[0].Size.X, ChpFile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
-
-                    if (!Config.UseCharaSizeForBackground)
-                    { 
-                        bgdst.Origin -= new Vector2D<int>(bg_x, bg_y);
-                        namedst.Origin -= new Vector2D<int>(bg_x, bg_y);
-                    }
 
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
@@ -529,6 +524,11 @@ void main()
 
                         offset.Origin.X += anchor_x;
                         offset.Origin.Y += anchor_y;
+                        if (!Config.UseCharaSizeForBackground)
+                        {
+                            offset.Origin.X += bg_x;
+                            offset.Origin.Y += bg_y;
+                        }
                         #endregion
 
                         #region Crop
@@ -715,6 +715,11 @@ void main()
 
                         offset.Origin.X += anchor_x;
                         offset.Origin.Y += anchor_y;
+                        if (!Config.UseCharaSizeForBackground)
+                        {
+                            offset.Origin.X += bg_x;
+                            offset.Origin.Y += bg_y;
+                        }
                         #endregion
 
                         #region Crop
