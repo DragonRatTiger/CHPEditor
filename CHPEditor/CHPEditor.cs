@@ -95,6 +95,7 @@ namespace CHPEditor
             _window.Render += Render;
             _window.FramebufferResize += Resize;
             _window.Closing += Closing;
+            _window.FileDrop += FileDrop;
 
 #if !DEBUG
             try
@@ -113,6 +114,19 @@ namespace CHPEditor
                 Trace.WriteLine(ex);
             }
 #endif
+        }
+
+        private static void FileDrop(string[] files)
+        {
+            if (files.Length > 0)
+            {
+                FileInfo file = new FileInfo(files[0]);
+                if (file.Extension.ToLower() == ".chp")
+                {
+                    Config.Path = file.FullName;
+                    ImGuiManager.ReloadFile(file.FullName);
+                }
+            }
         }
 
         private static void Closing()

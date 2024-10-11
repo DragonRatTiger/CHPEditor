@@ -52,6 +52,15 @@ namespace CHPEditor
             for (int i = 1; i <= 18; i++) { StateNames[i-1] = CHPEditor.Lang.GetValue("STATE_FULL_INDEXED", i, CHPEditor.Lang.GetValue(string.Format("STATE{0}_TITLE", i))); }
             if (CHPEditor.ChpFile.Loaded) { UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[0]); }
         }
+        public static void ReloadFile(string chp_path, Encoding? encoding = null)
+        {
+            CHPEditor.ChpFile.Dispose();
+            CHPEditor.ChpFile = new CHPFile(chp_path, encoding);
+            Timeline.Clear();
+
+            UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1]);
+            UpdateUsedRects();
+        }
         public static void Draw()
         {
             // Unfortunately, it looks like ImGuiNET lacks C# wrappers for the dock builder.
@@ -122,14 +131,29 @@ namespace CHPEditor
             ImGui.SetWindowSize(RatioFromWindowSize(0.25f, 0.5f));
 
             ImGui.InputTextWithHint(CHPEditor.Lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref CHPEditor.Config.Path, 1024);
+
+            if (ImGui.BeginCombo("Encoding", CHPEditor.ChpFile.FileEncoding.EncodingName))
+            {
+                foreach (var encoding in HEncodingDetector.Encodings)
+                {
+                    if (ImGui.Selectable(encoding.EncodingName))
+                    {
+                        ReloadFile(CHPEditor.Config.Path, encoding);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.BeginTooltip();
+                ImGui.Text("Use this if your file uses an encoding other than Shift-JIS.");
+                ImGui.TextColored(new Vector4(1.0f, 0.5f, 0.5f, 1.0f), "\nThis drop-down exists as a temporary solution\ndue to a lack of an encoding detector.");
+                ImGui.EndTooltip();
+            }
+
             if (ImGui.Button(CHPEditor.Lang.GetValue("CHP_RELOAD_PROMPT")))
             {
-                CHPEditor.ChpFile.Dispose();
-                CHPEditor.ChpFile = new CHPFile(CHPEditor.Config.Path);
-                Timeline.Clear();
-
-                UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1]);
-                UpdateCHPStats();
+                ReloadFile(CHPEditor.Config.Path);
             }
 #if DEBUG
             ImGui.Checkbox("DEBUG ONLY! Show ImGUI Demo Window", ref CHPEditor.showDebug);
@@ -137,31 +161,7 @@ namespace CHPEditor
             ImGui.Separator();
             if (CHPEditor.ChpFile.Loaded)
             {
-                ImGui.Text(CHPEditor.Lang.GetValue("CHP_FILE_INFO", CHPEditor.ChpFile.FileName, CHPEditor.ChpFile.FileEncoding.WebName));
-
-                if (ImGui.BeginCombo("Encoding", CHPEditor.ChpFile.FileEncoding.WebName))
-                {
-                    foreach (var encodinginfo in HEncodingDetector.Encodings)
-                    {
-                        if (ImGui.Selectable(encodinginfo.WebName))
-                        {
-                            CHPEditor.ChpFile.Dispose();
-                            CHPEditor.ChpFile = new CHPFile(CHPEditor.Config.Path, encodinginfo);
-                            Timeline.Clear();
-
-                            UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1]);
-                            UpdateUsedRects();
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-                if (ImGui.IsItemHovered())
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("Use this if your file uses an encoding other than Shift-JIS.");
-                    ImGui.TextColored(new Vector4(1.0f, 0.5f, 0.5f, 1.0f), "\nThis drop-down exists as a temporary solution\nto a lack of an encoding detector.");
-                    ImGui.EndTooltip();
-                }
+                ImGui.Text(CHPEditor.Lang.GetValue("CHP_FILE_INFO", CHPEditor.ChpFile.FileName, CHPEditor.ChpFile.FileEncoding.EncodingName));
 
                 if (!string.IsNullOrEmpty(CHPEditor.ChpFile.CharName)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_NAME", CHPEditor.ChpFile.CharName));
                 if (!string.IsNullOrEmpty(CHPEditor.ChpFile.Artist)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_ARTIST", CHPEditor.ChpFile.Artist));
