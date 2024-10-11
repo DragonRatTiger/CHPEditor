@@ -33,7 +33,7 @@
     "CHP_PATH_PROMPT": "パス",
     "CHP_RELOAD_PROMPT": "Reload File",
     "CHP_FILE_LOAD_FAIL": "CHP file could not be loaded.",
-    "CHP_FILE_INFO": "{0} (File Encoding: {1})",
+    "CHP_FILE_INFO": "{0}",
 
     "CHP_BMP_PATH": "Path: {0}",
     "CHP_BMP_SIZE": "サイズ: {0},{1}",
