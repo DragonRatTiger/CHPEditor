@@ -212,7 +212,6 @@ namespace CHPEditor
                 filedata = filedata.Replace("\r\n", "\n");
                 string[] lines = filedata.Split("\n");
 
-
                 foreach (string line in lines)
                 {
                     if (!(line.StartsWith("/") || line.StartsWith("//") || string.IsNullOrWhiteSpace(line)))
