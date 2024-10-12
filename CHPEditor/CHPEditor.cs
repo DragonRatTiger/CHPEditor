@@ -561,7 +561,7 @@ void main()
                         crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
 
                         // Skip drawing if any rects have zero width or zero height
-                        if (/*crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0 ||*/ crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
+                        if (crop_rect.Size.X == 0 || crop_rect.Size.Y == 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
@@ -656,7 +656,7 @@ void main()
                         #endregion
 
                         // Skip drawing if any rects have zero width or zero height
-                        if (/*sprite.Size.X <= 0 || sprite.Size.Y <= 0 ||*/ offset.Size.X <= 0 || offset.Size.Y <= 0) continue;
+                        if (sprite.Size.X == 0 || sprite.Size.Y == 0 || offset.Size.X <= 0 || offset.Size.Y <= 0) continue;
 
                         if (use2P && ChpFile.CharTex2P.Loaded)
                             ChpFile.Draw(ref ChpFile.CharTex2P, sprite, offset, rotation, alpha);
@@ -752,7 +752,7 @@ void main()
                         crop_dst.Size.Y += crop_amount.Origin.Y - crop_amount.Size.Y;
                         
                         // Skip drawing if any rects have zero width or zero height
-                        if (/*crop_rect.Size.X <= 0 || crop_rect.Size.Y <= 0 ||*/ crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
+                        if (crop_rect.Size.X == 0 || crop_rect.Size.Y == 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
                         #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
