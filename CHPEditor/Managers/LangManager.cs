@@ -2,64 +2,79 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.IO;
 using ImGuiNET;
-using Silk.NET.OpenGL;
-using StbImageSharp;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace CHPEditor
 {
-    internal class LangManager
+    public class LangData
     {
-        public string Id { get; private set; }
-        public string Language { get; private set; }
-        public Dictionary<string, string> Entries { get; private set; }
-        private string InvalidEntry;
-
-        private string DefaultFont;
-        private float DefaultFontSize;
-        private List<(string, float, string[]?, string[]?)> Fonts;
-
-        public LangManager(string id)
+        public struct FontInfo
         {
-            Id = id;
-            Language = "?";
-            Entries = new Dictionary<string, string>();
-            InvalidEntry = "INVALID_ENTRY";
-
-            DefaultFont = "font.ttf";
-            DefaultFontSize = 16.0f;
-            Fonts = new List<(string, float, string[]?, string[]?)>();
-
-            string langpath = Path.Combine("lang", Id, "lang.json");
-            string langjson = File.ReadAllText(langpath, Encoding.UTF8);
-
-            JsonNodeOptions nodeOptions = new JsonNodeOptions() { PropertyNameCaseInsensitive = false };
-            JsonDocumentOptions docOptions = new JsonDocumentOptions() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
-            JsonNode node = JsonNode.Parse(langjson, nodeOptions, docOptions);
-
-            Language = node["Language"].Deserialize<string>();
-            Entries = node["Entries"].Deserialize<Dictionary<string, string>>();
-            InvalidEntry = node["InvalidEntry"].Deserialize<string>();
-            
-            DefaultFont = node["DefaultFont"].Deserialize<string>();
-            DefaultFontSize = node["DefaultFontSize"].Deserialize<float>();
-
-            foreach (JsonObject arr in node["Fonts"].AsArray())
+            [JsonProperty("Font")]
+            public string Font;
+            [JsonProperty("Size")]
+            public float Size;
+            [JsonProperty("GlyphSets")]
+            public string[] GlyphSets;
+            [JsonProperty("CustomGlyphs")]
+            public string[] CustomGlyphs;
+            public FontInfo()
             {
-                Fonts.Add(
-                    (arr["Font"].Deserialize<string>(), 
-                    arr["Size"].Deserialize<float>(), 
-                    arr["GlyphSets"].Deserialize<string[]?>(), 
-                    arr["CustomGlyphs"].Deserialize<string[]?>())
-                    );
+                Font = "font.ttf";
+                Size = 16.0f;
+                GlyphSets = [];
+                CustomGlyphs = [];
             }
         }
-        public unsafe void UseFont()
+        public string Id = "?";
+
+        [JsonProperty("Language")]
+        public string Language = "?";
+        [JsonProperty("InvalidEntry")]
+        public string InvalidEntry = "INVALID ENTRY: {0}";
+        [JsonProperty("DefaultFont")]
+        public string DefaultFont = "font.ttf";
+        [JsonProperty("DefaultFontSize")]
+        public float DefaultFontSize = 16.0f;
+
+        [JsonProperty("Fonts")]
+        public FontInfo[] Fonts = [];
+        [JsonProperty("Entries")]
+        public Dictionary<string, string> Entries = [];
+    }
+    public static class LangManager
+    {
+        private static LangData langData = new LangData();
+        public static string Id => langData.Id;
+        public static string Language => langData.Language;
+        public static Dictionary<string, string> Entries => langData.Entries;
+        private static string InvalidEntry => langData.InvalidEntry;
+
+        private static string DefaultFont => langData.DefaultFont;
+        private static float DefaultFontSize => langData.DefaultFontSize;
+        private static LangData.FontInfo[] Fonts => langData.Fonts;
+
+        public static void Initalize(string id)
+        {
+            string langpath = Path.Combine("lang", id, "lang.json");
+            if (File.Exists(langpath))
+            {
+                var settings = new JsonSerializerSettings()
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore
+                };
+                langData = JsonConvert.DeserializeObject<LangData>(File.ReadAllText(langpath, Encoding.UTF8), settings) ?? new LangData();
+            }
+
+            langData.Id = id;
+        }
+
+        public static unsafe void UseFont()
         {
             #region ImGUI Font Setup
             CHPEditor.IO.Fonts.Clear();
@@ -70,45 +85,45 @@ namespace CHPEditor
             config.MergeMode = true;
 
             #region Extra Glyphs
-            foreach ((string, float, string[]?, string[]?) font in Fonts)
+            foreach (LangData.FontInfo font in Fonts)
             {
-                if (font.Item3 != null)
-                foreach (string glyph in font.Item3)
+                if (font.GlyphSets != null)
+                foreach (string glyph in font.GlyphSets)
                 {
                     switch (glyph.ToLower())
                     {
                         case "japanese":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesJapanese());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesJapanese());
                             break;
                         case "chinese_full":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseFull());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseFull());
                             break;
                         case "chinese_simplified_common":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseSimplifiedCommon());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesChineseSimplifiedCommon());
                             break;
                         case "cyrillic":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesCyrillic());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesCyrillic());
                             break;
                         case "greek":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesGreek());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesGreek());
                             break;
                         case "korean":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesKorean());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesKorean());
                             break;
                         case "thai":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesThai());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesThai());
                             break;
                         case "vietnamese":
-                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, CHPEditor.IO.Fonts.GetGlyphRangesVietnamese());
+                            CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, CHPEditor.IO.Fonts.GetGlyphRangesVietnamese());
                             break;
                     }
                 }
 
-                if (font.Item4 != null)
+                if (font.CustomGlyphs != null)
                 {
-                    byte[] glyphs = font.Item4.Select(byte.Parse).ToArray();
+                    byte[] glyphs = font.CustomGlyphs.Select(byte.Parse).ToArray();
                     fixed (byte* glyph_data = glyphs)
-                        CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Item1), font.Item2, config, (IntPtr)glyph_data);
+                        CHPEditor.IO.Fonts.AddFontFromFileTTF(Path.Combine("lang", Id, font.Font), font.Size, config, (IntPtr)glyph_data);
                 }
             }
             #endregion
@@ -117,6 +132,7 @@ namespace CHPEditor
 
             byte[] arr = new byte[font_width * font_height * 4];
             Marshal.Copy((IntPtr)font_pixels, arr, 0, arr.Length);
+            Marshal.FreeHGlobal((IntPtr)font_pixels);
 
             CHPEditor._imguiFontAtlas?.Dispose();
             CHPEditor._imguiFontAtlas = new ImageManager(arr, font_width, font_height);
@@ -125,11 +141,11 @@ namespace CHPEditor
 
             #endregion
         }
-        public string GetValue(string key)
+        public static string GetValue(string key)
         {
             return Entries.TryGetValue(key, out string value) ? value : string.Format(InvalidEntry, key);
         }
-        public string GetValue(string key, params object?[] args)
+        public static string GetValue(string key, params object?[] args)
         {
             return Entries.TryGetValue(key, out string value) ? string.Format(value, args) : string.Format(InvalidEntry, key);
         }

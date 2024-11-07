@@ -35,9 +35,9 @@ namespace CHPEditor
         public static int SelectedRect = 0;
 
         private static string[] StateNames = new string[18];
-        private static string[] PatternNames;
-        private static string[] TextureNames;
-        private static string[] LayerNames;
+        private static string[] PatternNames = [];
+        private static string[] TextureNames = [];
+        private static string[] LayerNames = [];
 
         private static int SelectedPattern = 0;
         private static int SelectedTexture = 0;
@@ -49,7 +49,7 @@ namespace CHPEditor
 
         public static void Initialize()
         {
-            for (int i = 1; i <= 18; i++) { StateNames[i-1] = CHPEditor.Lang.GetValue("STATE_FULL_INDEXED", i, CHPEditor.Lang.GetValue(string.Format("STATE{0}_TITLE", i))); }
+            for (int i = 1; i <= 18; i++) { StateNames[i-1] = LangManager.GetValue("STATE_FULL_INDEXED", i, LangManager.GetValue(string.Format("STATE{0}_TITLE", i))); }
             if (CHPEditor.ChpFile.Loaded) { UpdateObjectNames(ref CHPEditor.ChpFile.AnimeCollection[0]); }
         }
         public static void ReloadFile(string chp_path, Encoding? encoding = null)
@@ -87,13 +87,13 @@ namespace CHPEditor
                 ImGui.ShowDemoWindow();
 #endif
 
-            ImGui.Begin(CHPEditor.Lang.GetValue("WINDOW_PREVIEW_SELECTOR_TITLE") + "###SELECT", flags);
+            ImGui.Begin(LangManager.GetValue("WINDOW_PREVIEW_SELECTOR_TITLE") + "###SELECT", flags);
             ImGui.SetWindowPos(new Vector2(0,21) + RatioFromWindowSize(0.75f, 0));
             ImGui.SetWindowSize(RatioFromWindowSize(0.25f, 0.5f));
 
             if (ImGui.BeginTabBar("DisplayMode"))
             {
-                if (ImGui.BeginTabItem(CHPEditor.Lang.GetValue("TAB_BITMAPS")))
+                if (ImGui.BeginTabItem(LangManager.GetValue("TAB_BITMAPS")))
                 {
                     if (ImGui.IsItemActive()) { BackgroundOffset = new Vector2(0, 0); BackgroundZoom = 1.0f; }
 
@@ -109,7 +109,7 @@ namespace CHPEditor
                     }
                     ImGui.EndTabItem();
                 }
-                if (ImGui.BeginTabItem(CHPEditor.Lang.GetValue("TAB_ANIMATIONS")))
+                if (ImGui.BeginTabItem(LangManager.GetValue("TAB_ANIMATIONS")))
                 {
                     if (ImGui.IsItemActive()) { BackgroundOffset = new Vector2(0, 0); BackgroundZoom = 1.0f; }
 
@@ -126,11 +126,11 @@ namespace CHPEditor
 
             #region CHP Info
 
-            ImGui.Begin(CHPEditor.Lang.GetValue("WINDOW_CHP_INFO_TITLE") + "###INFO", flags);
+            ImGui.Begin(LangManager.GetValue("WINDOW_CHP_INFO_TITLE") + "###INFO", flags);
             ImGui.SetWindowPos(RatioFromWindowSize(0.75f, 0.5f) + new Vector2(0,21));
             ImGui.SetWindowSize(RatioFromWindowSize(0.25f, 0.5f));
 
-            ImGui.InputTextWithHint(CHPEditor.Lang.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref CHPEditor.Config.Path, 1024);
+            ImGui.InputTextWithHint(LangManager.GetValue("CHP_PATH_PROMPT"), Path.Combine("chara", "chara.chp"), ref CHPEditor.Config.Path, 1024);
 
             if (ImGui.BeginCombo("Encoding", CHPEditor.ChpFile.FileEncoding.EncodingName))
             {
@@ -151,7 +151,7 @@ namespace CHPEditor
                 ImGui.EndTooltip();
             }
 
-            if (ImGui.Button(CHPEditor.Lang.GetValue("CHP_RELOAD_PROMPT")))
+            if (ImGui.Button(LangManager.GetValue("CHP_RELOAD_PROMPT")))
             {
                 ReloadFile(CHPEditor.Config.Path);
             }
@@ -161,16 +161,16 @@ namespace CHPEditor
             ImGui.Separator();
             if (CHPEditor.ChpFile.Loaded)
             {
-                ImGui.Text(CHPEditor.Lang.GetValue("CHP_FILE_INFO", CHPEditor.ChpFile.FileName));
+                ImGui.Text(LangManager.GetValue("CHP_FILE_INFO", CHPEditor.ChpFile.FileName));
 
-                if (!string.IsNullOrEmpty(CHPEditor.ChpFile.CharName)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_NAME", CHPEditor.ChpFile.CharName));
-                if (!string.IsNullOrEmpty(CHPEditor.ChpFile.Artist)) ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_ARTIST", CHPEditor.ChpFile.Artist));
+                if (!string.IsNullOrEmpty(CHPEditor.ChpFile.CharName)) ImGui.Text(LangManager.GetValue("CHP_CHARA_NAME", CHPEditor.ChpFile.CharName));
+                if (!string.IsNullOrEmpty(CHPEditor.ChpFile.Artist)) ImGui.Text(LangManager.GetValue("CHP_CHARA_ARTIST", CHPEditor.ChpFile.Artist));
 
                 ImGui.Separator();
 
                 if (!CHPEditor.anitoggle)
                 {
-                    string bmpname = CHPEditor.Lang.GetValue("CHP_BMP_PATH_NONE");
+                    string bmpname = LangManager.GetValue("CHP_BMP_PATH_NONE");
                     Vector2D<int> bmpsize = new Vector2D<int>(0, 0);
                     System.Drawing.Color bmpcolor = System.Drawing.Color.Transparent;
                     switch (CHPEditor.bmpstate)
@@ -240,34 +240,34 @@ namespace CHPEditor
                             }
                             break;
                     }
-                    ImGui.Text(CHPEditor.Lang.GetValue("CHP_BMP_PATH", bmpname));
-                    ImGui.Text(CHPEditor.Lang.GetValue("CHP_BMP_SIZE", bmpsize.X, bmpsize.Y));
-                    ImGui.Text(CHPEditor.Lang.GetValue("CHP_BMP_COLORKEY", bmpcolor.R, bmpcolor.G, bmpcolor.B, bmpcolor.A));
+                    ImGui.Text(LangManager.GetValue("CHP_BMP_PATH", bmpname));
+                    ImGui.Text(LangManager.GetValue("CHP_BMP_SIZE", bmpsize.X, bmpsize.Y));
+                    ImGui.Text(LangManager.GetValue("CHP_BMP_COLORKEY", bmpcolor.R, bmpcolor.G, bmpcolor.B, bmpcolor.A));
                 }
                 else
                 {
-                    ImGui.Text(CHPEditor.Lang.GetValue("STATE_INDEXED", CHPEditor.anishow) + "\n\n");
+                    ImGui.Text(LangManager.GetValue("STATE_INDEXED", CHPEditor.anishow) + "\n\n");
                     if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loaded)
                     {
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame != 0)
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TIMELINE",
+                            ImGui.Text(LangManager.GetValue("CHP_CHARA_TIMELINE",
                             Timeline.CurrentFrame,
                             CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount - 1,
                             Math.Round(Timeline.CurrentTime / 1000.0, 2),
                             (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount) / 1000.0
                             ));
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame));
+                            ImGui.Text(LangManager.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Frame));
                         }
                         else
                         {
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TIMELINE",
+                            ImGui.Text(LangManager.GetValue("CHP_CHARA_TIMELINE",
                             Timeline.CurrentFrame,
                             CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount - 1,
                             Math.Round(Timeline.CurrentTime / 1000.0, 2),
                             (CHPEditor.ChpFile.Anime * CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount) / 1000.0
                                 ));
-                            ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.Anime, CHPEditor.ChpFile.Anime));
+                            ImGui.Text(LangManager.GetValue("CHP_CHARA_FPS", 1000.0f / CHPEditor.ChpFile.Anime, CHPEditor.ChpFile.Anime));
                         }
 
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop > 0)
@@ -275,29 +275,29 @@ namespace CHPEditor
                             bool loopIsExceeding = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop >= CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount; // True if Loop exceeds index of last frame
                             ImGui.TextColored( loopIsExceeding ? new Vector4(1, 0, 0, 1) : new Vector4(1),
                                 loopIsExceeding ? 
-                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_WARN_BOUNDS", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop) :
-                                CHPEditor.Lang.GetValue("CHP_CHARA_LOOP", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop));
+                                LangManager.GetValue("CHP_CHARA_LOOP_WARN_BOUNDS", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop) :
+                                LangManager.GetValue("CHP_CHARA_LOOP", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop));
                         }
 
                         ImGui.Columns(3);
 
-                        ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref CHPEditor.pause);
+                        ImGui.Checkbox(LangManager.GetValue("ANIMATIONS_PAUSE_PROMPT"), ref CHPEditor.pause);
 
                         ImGui.NextColumn();
 
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Loop > 0)
                         {
-                            ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT"), ref Timeline.UseLoop);
+                            ImGui.Checkbox(LangManager.GetValue("CHP_CHARA_LOOP_PROMPT"), ref Timeline.UseLoop);
                         }
                         else
-                            ImGui.TextDisabled(CHPEditor.Lang.GetValue("CHP_CHARA_LOOP_PROMPT_DISABLED"));
+                            ImGui.TextDisabled(LangManager.GetValue("CHP_CHARA_LOOP_PROMPT_DISABLED"));
 
                         ImGui.NextColumn();
 
                         if (CHPEditor.ChpFile.CharBMP2P.Loaded)
-                            ImGui.Checkbox(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT"), ref CHPEditor.use2P);
+                            ImGui.Checkbox(LangManager.GetValue("ANIMATIONS_USE2P_PROMPT"), ref CHPEditor.use2P);
                         else
-                            ImGui.TextDisabled(CHPEditor.Lang.GetValue("ANIMATIONS_USE2P_PROMPT_DISABLED"));
+                            ImGui.TextDisabled(LangManager.GetValue("ANIMATIONS_USE2P_PROMPT_DISABLED"));
 
                         ImGui.NextColumn();
 
@@ -306,18 +306,18 @@ namespace CHPEditor
                         ImGui.Separator();
 
                         if (CHPEditor.anishow != 14)
-                            ImGui.Checkbox(CHPEditor.Lang.GetValue("CHP_CHARA_HIDE_BG_PROMPT"), ref CHPEditor.hideBg);
+                            ImGui.Checkbox(LangManager.GetValue("CHP_CHARA_HIDE_BG_PROMPT"), ref CHPEditor.hideBg);
 
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count > 0)
                         {
-                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count));
+                            //ImGui.Text(LangManager.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count));
                             
-                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count) + "###PATTERN_TREE", ImGuiTreeNodeFlags.DefaultOpen))
+                            if (ImGui.TreeNodeEx(LangManager.GetValue("CHP_CHARA_PATTERN_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern.Count) + "###PATTERN_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < PatternDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment != "" ?
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment) :
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !PatternDisabled[i]))
+                                        LangManager.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[i].Comment) :
+                                        LangManager.GetValue("CHP_CHARA_ITEM", i + 1), !PatternDisabled[i]))
                                         PatternDisabled[i] = !PatternDisabled[i];
                                 ImGui.TreePop();
                             }
@@ -325,28 +325,28 @@ namespace CHPEditor
                         }
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count > 0)
                         {
-                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count));
+                            //ImGui.Text(LangManager.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count));
 
-                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count) + "###TEXTURE_TREE", ImGuiTreeNodeFlags.DefaultOpen))
+                            if (ImGui.TreeNodeEx(LangManager.GetValue("CHP_CHARA_TEXTURE_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture.Count) + "###TEXTURE_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < TextureDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment != "" ?
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment) :
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !TextureDisabled[i]))
+                                        LangManager.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[i].Comment) :
+                                        LangManager.GetValue("CHP_CHARA_ITEM", i + 1), !TextureDisabled[i]))
                                         TextureDisabled[i] = !TextureDisabled[i];
                                 ImGui.TreePop();
                             }
                         }
                         if (CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count > 0)
                         {
-                            //ImGui.Text(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count));
+                            //ImGui.Text(LangManager.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count));
 
-                            if (ImGui.TreeNodeEx(CHPEditor.Lang.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count) + "###LAYER_TREE", ImGuiTreeNodeFlags.DefaultOpen))
+                            if (ImGui.TreeNodeEx(LangManager.GetValue("CHP_CHARA_LAYER_ACTIVE", CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer.Count) + "###LAYER_TREE", ImGuiTreeNodeFlags.DefaultOpen))
                             {
                                 for (int i = 0; i < LayerDisabled.Length; i++)
                                     if (ImGui.Selectable(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment != "" ?
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment) :
-                                        CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", i + 1), !LayerDisabled[i]))
+                                        LangManager.GetValue("CHP_CHARA_ITEM_DETAIL", i + 1, CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[i].Comment) :
+                                        LangManager.GetValue("CHP_CHARA_ITEM", i + 1), !LayerDisabled[i]))
                                         LayerDisabled[i] = !LayerDisabled[i];
                                 ImGui.TreePop();
                             }
@@ -354,14 +354,14 @@ namespace CHPEditor
                     }
                     else
                     {
-                        ImGui.TextDisabled(CHPEditor.Lang.GetValue("CHP_CHARA_ANIMATION_NONE"));
+                        ImGui.TextDisabled(LangManager.GetValue("CHP_CHARA_ANIMATION_NONE"));
                     }
                 }
 
             }
             else
             {
-                ImGui.TextColored(new System.Numerics.Vector4(1.0f, 0.5f, 0.5f, 1.0f), CHPEditor.Lang.GetValue("CHP_FILE_LOAD_FAIL"));
+                ImGui.TextColored(new System.Numerics.Vector4(1.0f, 0.5f, 0.5f, 1.0f), LangManager.GetValue("CHP_FILE_LOAD_FAIL"));
                 ImGui.TextWrapped(CHPEditor.ChpFile.Error);
             }
             ImGui.End();
@@ -472,7 +472,7 @@ namespace CHPEditor
                         SelectedLayer = 0;
                     }
 
-                    if (ImGui.BeginCombo(CHPEditor.Lang.GetValue("TAB_ANIMATIONS"), StateNames[CHPEditor.anishow - 1]))
+                    if (ImGui.BeginCombo(LangManager.GetValue("TAB_ANIMATIONS"), StateNames[CHPEditor.anishow - 1]))
                     {
                         AnimationSelectables();
                         ImGui.EndCombo();
@@ -498,7 +498,7 @@ namespace CHPEditor
                         if (CHPEditor.pause)
                             { if (ImGui.Button("Play Animation")) CHPEditor.pause = false; }
                         else
-                            { if (ImGui.Button(CHPEditor.Lang.GetValue("ANIMATIONS_PAUSE_PROMPT"))) CHPEditor.pause = true; }
+                            { if (ImGui.Button(LangManager.GetValue("ANIMATIONS_PAUSE_PROMPT"))) CHPEditor.pause = true; }
 
                         #region Pattern
                         if (PatternNames.Length > 0)
@@ -1016,7 +1016,7 @@ namespace CHPEditor
         {
             var rect = CHPEditor.ChpFile.RectCollection[index];
             string numbers = " [" + rect.Origin.X + "," + rect.Origin.Y + "," + rect.Size.X + "," + rect.Size.Y + "]";
-            string info = !string.IsNullOrEmpty(CHPEditor.ChpFile.RectComments[index]) ? CHPEditor.Lang.GetValue("CHP_CHARA_ITEM_DETAIL", index + 1, CHPEditor.ChpFile.RectComments[index]) : CHPEditor.Lang.GetValue("CHP_CHARA_ITEM", index + 1);
+            string info = !string.IsNullOrEmpty(CHPEditor.ChpFile.RectComments[index]) ? LangManager.GetValue("CHP_CHARA_ITEM_DETAIL", index + 1, CHPEditor.ChpFile.RectComments[index]) : LangManager.GetValue("CHP_CHARA_ITEM", index + 1);
 
             UsedRects[index] = (rect != new Rectangle<int>(0, 0, 0, 0)) || !string.IsNullOrEmpty(CHPEditor.ChpFile.RectComments[index]);
             UsedRectsPreview[index] = UsedRects[index] ? info + numbers : info + " [Unused]";

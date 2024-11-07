@@ -1,13 +1,10 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
 namespace CHPEditor
 {
     internal class HEncodingDetector
     {
-        public static Encoding[] Encodings { get; private set; }
+        public static Encoding[] Encodings { get; private set; } = [];
 
         public static void InitializeEncodings()
         {

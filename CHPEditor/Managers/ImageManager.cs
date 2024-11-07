@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.IO.Compression;
 using ImGuiNET;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -14,6 +12,20 @@ namespace CHPEditor
 
         public ImageResult Image { get; private set; }
         public uint Pointer { get; private set; }
+        public int Width => Image.Width;
+        public int Height => Image.Height;
+        public byte[] Data => Image.Data;
+        public int PixelSize
+        {
+            get
+            {
+                switch (Image.Comp)
+                {
+                    case ColorComponents.Default: return 4;
+                    default: return (int)Image.Comp;
+                }
+            }
+        }
 
         public ImageManager()
         {

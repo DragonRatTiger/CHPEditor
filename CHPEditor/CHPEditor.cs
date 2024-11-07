@@ -22,7 +22,6 @@ namespace CHPEditor
         public static uint _ebo { get; private set; }
         public static uint _program { get; private set; }
         public static ImGuiIOPtr IO;
-        public static LangManager Lang;
         public static ConfigManager Config;
 
         // GL locations
@@ -74,7 +73,7 @@ namespace CHPEditor
             HEncodingDetector.InitializeEncodings();
 
             Config = new ConfigManager("Config.ini");
-            Lang = new LangManager(Config.Lang);
+            LangManager.Initalize(Config.Lang);
             InitLog(Config.LogFileIsTimestamped);
 
             Trace.TraceInformation("Booting " + _assembly.GetName().Name + " Version " + _assembly.GetName().Version
@@ -172,7 +171,7 @@ namespace CHPEditor
             IO.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
             #region ImGUI Font Setup
-            Lang.UseFont();
+            LangManager.UseFont();
             #endregion
 
             #endregion

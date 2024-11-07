@@ -21,9 +21,10 @@ namespace CHPEditor
         public bool Loaded { get; private set; }
         public string Error { get; private set; }
 
-        public string FileName;
-        public string FilePath;
-        public string FolderPath { get { return Path.GetDirectoryName(FilePath); } }
+        public FileInfo? FileInformation { get; private set; }
+        public string FileName => FileInformation?.Name ?? "";
+        public string FilePath { get { try { return FileInformation?.FullName ?? ""; } catch { return ""; } } }
+        public string FolderPath { get { try { return Path.GetDirectoryName(FilePath) ?? ""; } catch { return ""; } } }
         public Encoding FileEncoding { get; private set; } = Encoding.GetEncoding(932);
 
         public int Anime = 83; // Took a guess for this one, since some charas don't have #Anime defined. Need to look a bit more into this. (It's 12fps rounded down)
@@ -96,6 +97,13 @@ namespace CHPEditor
             public List<PatternData> Pattern;
             public List<TextureData> Texture;
             public List<PatternData> Layer;
+
+            public AnimeData()
+            {
+                Pattern = [];
+                Texture = [];
+                Layer = [];
+            }
         }
         public struct TweenData
         {
@@ -129,11 +137,18 @@ namespace CHPEditor
             public List<PatternData> Pattern;
             public List<TextureData> Texture;
             public List<PatternData> Layer;
+            
+            public TweenData()
+            {
+                Pattern = [];
+                Texture = [];
+                Layer = [];
+            }
         }
         public struct BitmapData
         {
             public string Path;
-            public ImageFileManager? ImageFile;
+            public ImageFileManager ImageFile;
             public ColorKeyType ColorKeyType;
             public Color ColorKey;
             public Vector2D<int> Bounds
@@ -141,7 +156,7 @@ namespace CHPEditor
                 get
                 {
                     if (Loaded)
-                        return new Vector2D<int>(ImageFile.Image.Width, ImageFile.Image.Height);
+                        return new Vector2D<int>(ImageFile.Width, ImageFile.Height);
                     else
                         return new Vector2D<int>(0, 0);
                 }
@@ -166,7 +181,7 @@ namespace CHPEditor
 
         public string CharName = "";
         public string Artist = "";
-        public string CharFile { get; protected set; }
+        public string CharFile { get; protected set; } = "";
         public BitmapData CharBMP,
             CharBMP2P,
             CharFace,
@@ -176,11 +191,11 @@ namespace CHPEditor
             CharTex,
             CharTex2P;
 
-        public Rectangle<int>[] RectCollection;
-        public string[] RectComments;
+        public Rectangle<int>[] RectCollection = [];
+        public string[] RectComments = [];
 
-        public AnimeData[] AnimeCollection { get; protected set; }
-        public TweenData[] TweenCollection { get; protected set; }
+        public AnimeData[] AnimeCollection { get; protected set; } = new AnimeData[(int)StateNames.COUNT];
+        public TweenData[] TweenCollection { get; protected set; } = new TweenData[(int)StateNames.COUNT];
         public CHPFile(string filename, Encoding? encoding = null)
         {
             Loaded = false;
@@ -194,12 +209,12 @@ namespace CHPEditor
                 //FileEncoding = HEncodingDetector.DetectEncoding(filename, Encoding.GetEncoding(932));
 
                 string filedata = File.ReadAllText(filename, FileEncoding);
-                FileName = Path.GetFileName(filename);
-                FilePath = filename;
+                FileInformation = new FileInfo(filename);
 
-                AnimeCollection = new AnimeData[18];
-                TweenCollection = new TweenData[18];
-                for (int i = 0; i < 18; i++)
+                filedata = filedata.Replace("\r\n", "\n");
+                string[] lines = filedata.Split("\n");
+
+                for (int i = 0; i < (int)StateNames.COUNT; i++)
                 {
                     AnimeCollection[i].Pattern = new List<AnimeData.PatternData>();
                     AnimeCollection[i].Texture = new List<AnimeData.TextureData>();
@@ -208,9 +223,6 @@ namespace CHPEditor
                     TweenCollection[i].Texture = new List<TweenData.TextureData>();
                     TweenCollection[i].Layer = new List<TweenData.PatternData>();
                 }
-
-                filedata = filedata.Replace("\r\n", "\n");
-                string[] lines = filedata.Split("\n");
 
                 foreach (string line in lines)
                 {
@@ -424,7 +436,7 @@ namespace CHPEditor
                                 break;
                             #endregion
                             default: // Remember that #00 and #01 are strictly reserved for Name Logo & character background respectively
-                                if (RectCollection == null)
+                                if (RectCollection.Length == 0)
                                 {
                                     RectCollection = new Rectangle<int>[Data * Data];
                                     RectComments = new string[Data * Data];
@@ -650,7 +662,7 @@ namespace CHPEditor
         private bool TryParseFromHex(string hex, int baseSize, out int result)
         {
             try { result = ParseFromHex(hex, baseSize); return true; }
-            catch (Exception e) { result = 0; return false; }
+            catch { result = 0; return false; }
         }
         #endregion
         #region Draw Methods
@@ -690,9 +702,6 @@ namespace CHPEditor
                     Loaded = false;
                     Error = "";
 
-                    FileName = "";
-                    FilePath = "";
-                    FileEncoding = null;
                     CharName = "";
                     Artist = "";
                     CharFile = "";

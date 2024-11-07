@@ -18,21 +18,8 @@ namespace CHPEditor
         /// </summary>
         public string Path
         { 
-            get
-            {
-                if (CaseInsensitive)
-                {
-                    return _path;
-                }
-                else
-                {
-                    return RequestedPath;
-                }
-            } 
-            private set
-            {
-                _path = value;
-            }
+            get { return CaseInsensitive ? _path : RequestedPath; } 
+            private set { _path = value; }
         }
         public bool CaseInsensitive { get; private set; }
 
@@ -80,8 +67,8 @@ namespace CHPEditor
             {
                 if (disposing)
                 {
-                    RequestedPath = String.Empty;
-                    _path = String.Empty;
+                    RequestedPath = "";
+                    _path = "";
                     CaseInsensitive = false;
                 }
 
