@@ -522,11 +522,11 @@ namespace CHPEditor
                                 BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame], CHPEditor.use2P);
                             }
 
-                            bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            bool istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Sprite[CurrentFrame];
 
                             #region Sprite
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
                             if (ImGui.InputText("Label", ref currentref.Comment, 128))
@@ -535,13 +535,13 @@ namespace CHPEditor
                                 UpdatePatternNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern);
                             }
 
-                            if (isinterpolating)
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Sprite", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_PATTERN_SPRITE_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
                             }
@@ -557,29 +557,29 @@ namespace CHPEditor
                             ImGui.EndDisabled();
                             #endregion
                             #region Offset
-                            isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             bool isused = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Offset.Length > 0;
                             int currentrect_offset = isused ? CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern].Offset[CurrentFrame] : 0;
 
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
-                            if (isinterpolating)
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_PATTERN_OFFSET_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
                                     item.Offset = [];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = tween;
                                 }
                             }
                             else if (!isused)
@@ -589,11 +589,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Create Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
                                     item.Offset = new int[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = tween;
                                 }
                             }
                             else
@@ -621,7 +621,7 @@ namespace CHPEditor
                         #region Texture
                         if (TextureNames.Length > 0)
                         {
-                            string inter_placeholder_text = "(Interpolated animation)";
+                            string tween_placeholder_text = "(Tweening animation)";
                             ImGui.SeparatorText("Textures");
 
                             if (ImGui.BeginCombo($"Textures ({TextureNames.Length})", TextureNames[SelectedTexture]))
@@ -642,13 +642,13 @@ namespace CHPEditor
                             }
 
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite[CurrentFrame];
-                            bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            bool istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             bool offset_isused = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset.Length > 0;
                             bool alpha_isused = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Alpha.Length > 0;
                             bool rotation_isused = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation.Length > 0;
 
                             #region Sprite
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                             if (ImGui.InputText("Label", ref currentref.Comment, 128))
@@ -657,13 +657,13 @@ namespace CHPEditor
                                 UpdateTextureNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture);
                             }
 
-                            if (isinterpolating)
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Sprite", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_TEXTURE_SPRITE_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
                             }
@@ -681,17 +681,17 @@ namespace CHPEditor
                             ImGui.EndDisabled();
                             #endregion
                             #region Offset
-                            isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             int currentrect_offset = offset_isused ? CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Offset[CurrentFrame] : 0;
 
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
-                            if (isinterpolating)
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_TEXTURE_OFFSET_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
                             }
@@ -715,13 +715,13 @@ namespace CHPEditor
                             ImGui.EndDisabled();
                             #endregion
                             #region Alpha
-                            isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Alpha.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Alpha.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             currentrect = alpha_isused ? CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Alpha[CurrentFrame] : 0;
 
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
-                            if (isinterpolating)
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
+                            if (istweening)
                             {
-                                ImGui.InputText("Alpha", ref inter_placeholder_text, 1);
+                                ImGui.InputText("Alpha", ref tween_placeholder_text, 1);
                             }
                             else if (!alpha_isused)
                             {
@@ -738,13 +738,13 @@ namespace CHPEditor
                             ImGui.EndDisabled();
                             #endregion
                             #region Rotation
-                            isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             currentrect = rotation_isused ? CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture].Rotation[CurrentFrame] : 0;
 
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
-                            if (isinterpolating)
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
+                            if (istweening)
                             {
-                                ImGui.InputText("Rotation", ref inter_placeholder_text, 1);
+                                ImGui.InputText("Rotation", ref tween_placeholder_text, 1);
                             }
                             else if (!rotation_isused)
                             {
@@ -768,11 +768,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Offset = [];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                                 ImGui.SameLine();
                             }
@@ -781,11 +781,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Create Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Offset = new int[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                             }
                             #endregion
@@ -795,11 +795,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Remove Alpha Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Alpha = [];
-                                    inter.Alpha = [];
+                                    tween.Alpha = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                                 ImGui.SameLine();
                             }
@@ -808,12 +808,12 @@ namespace CHPEditor
                                 if (ImGui.Button("Create Alpha Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Alpha = new int[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount];
                                     for (int i = 0; i < item.Alpha.Length; i++) { item.Alpha[i] = 255; }
-                                    inter.Alpha = [];
+                                    tween.Alpha = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                             }
 
@@ -824,11 +824,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Remove Rotation Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Rotation = [];
-                                    inter.Rotation = [];
+                                    tween.Rotation = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                             }
                             else if (!rotation_isused && alpha_isused)
@@ -836,12 +836,12 @@ namespace CHPEditor
                                 if (ImGui.Button("Create Rotation Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
                                     item.Rotation = new int[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount];
                                     for (int i = 0; i < item.Rotation.Length; i++) { item.Rotation[i] = 0; }
-                                    inter.Rotation = [];
+                                    tween.Rotation = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = tween;
                                 }
                             }
                             #endregion
@@ -871,11 +871,11 @@ namespace CHPEditor
                                 BMPTooltip(CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame], CHPEditor.use2P);
                             }
 
-                            bool isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            bool istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             int currentrect = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Sprite[CurrentFrame];
 
                             #region Sprite
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
                             if (ImGui.InputText("Label", ref currentref.Comment, 128))
@@ -884,13 +884,13 @@ namespace CHPEditor
                                 UpdateLayerNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer);
                             }
 
-                            if (isinterpolating)
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Sprite###ANIMATION_LAYER_SPRITE", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Sprite###ANIMATION_LAYER_SPRITE", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Sprite Rect###ANIMATION_LAYER_SPRITE_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
                             }
@@ -906,29 +906,29 @@ namespace CHPEditor
                             ImGui.EndDisabled();
                             #endregion
                             #region Offset
-                            isinterpolating = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
+                            istweening = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Offset.Any(i => i.IsWithinTimeframe(Timeline.CurrentTime));
                             bool isused = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Offset.Length > 0;
                             int currentrect_offset = isused ? CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer].Offset[CurrentFrame] : 0;
 
-                            ImGui.BeginDisabled(!CHPEditor.pause || isinterpolating);
-                            if (isinterpolating)
+                            ImGui.BeginDisabled(!CHPEditor.pause || istweening);
+                            if (istweening)
                             {
                                 int fake = 0;
-                                ImGui.Combo("Offset", ref fake, ["(Interpolated animation)"], 1);
+                                ImGui.Combo("Offset", ref fake, ["(Tweening animation)"], 1);
                                 if (ImGui.TreeNodeEx("Edit Offset Rect###ANIMATION_LAYER_OFFSET_RECT"))
                                 {
-                                    InterpolateRectCombo();
+                                    TweenRectCombo();
                                     ImGui.TreePop();
                                 }
 
                                 if (ImGui.Button("Remove Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
                                     item.Offset = [];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = tween;
                                 }
                             }
                             else if (!isused)
@@ -938,11 +938,11 @@ namespace CHPEditor
                                 if (ImGui.Button("Create Offset Frames"))
                                 {
                                     var item = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
-                                    var inter = CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
+                                    var tween = CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
                                     item.Offset = new int[CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].FrameCount];
-                                    inter.Offset = [];
+                                    tween.Offset = [];
                                     CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = item;
-                                    CHPEditor.ChpFile.InterpolateCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = inter;
+                                    CHPEditor.ChpFile.TweenCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = tween;
                                 }
                             }
                             else
@@ -1239,14 +1239,14 @@ namespace CHPEditor
                 UpdateUsedRect(selected);
             }
         }
-        static void InterpolateRectCombo()
+        static void TweenRectCombo()
         {
             string fake = "";
-            ImGui.InputTextWithHint("Label", "(Interpolated animation)", ref fake, 1);
-            ImGui.InputTextWithHint("X", "(Interpolated animation)", ref fake, 1);
-            ImGui.InputTextWithHint("Y", "(Interpolated animation)", ref fake, 1);
-            ImGui.InputTextWithHint("W", "(Interpolated animation)", ref fake, 1);
-            ImGui.InputTextWithHint("H", "(Interpolated animation)", ref fake, 1);
+            ImGui.InputTextWithHint("Label", "(Tweening animation)", ref fake, 1);
+            ImGui.InputTextWithHint("X", "(Tweening animation)", ref fake, 1);
+            ImGui.InputTextWithHint("Y", "(Tweening animation)", ref fake, 1);
+            ImGui.InputTextWithHint("W", "(Tweening animation)", ref fake, 1);
+            ImGui.InputTextWithHint("H", "(Tweening animation)", ref fake, 1);
         }
 
         public static void DrawHighlight(Rectangle<int> rect, double rot = 0.0) { if (HighlightRect) Highlight.Draw(rect, rot); }

@@ -97,9 +97,9 @@ namespace CHPEditor
             public List<TextureData> Texture;
             public List<PatternData> Layer;
         }
-        public struct InterpolateData
+        public struct TweenData
         {
-            public struct InterpolateKey
+            public struct TweenKey
             {
                 public int Start;
                 public int Length;
@@ -113,17 +113,17 @@ namespace CHPEditor
             {
                 public PatternData() { Sprite = []; Offset = []; }
 
-                public InterpolateKey[] Sprite;
-                public InterpolateKey[] Offset;
+                public TweenKey[] Sprite;
+                public TweenKey[] Offset;
             }
             public struct TextureData
             {
                 public TextureData() { Sprite = []; Offset = []; Alpha = []; Rotation = []; }
 
-                public InterpolateKey[] Sprite;
-                public InterpolateKey[] Offset;
-                public InterpolateKey[] Alpha;
-                public InterpolateKey[] Rotation;
+                public TweenKey[] Sprite;
+                public TweenKey[] Offset;
+                public TweenKey[] Alpha;
+                public TweenKey[] Rotation;
             }
 
             public List<PatternData> Pattern;
@@ -180,7 +180,7 @@ namespace CHPEditor
         public string[] RectComments;
 
         public AnimeData[] AnimeCollection { get; protected set; }
-        public InterpolateData[] InterpolateCollection { get; protected set; }
+        public TweenData[] TweenCollection { get; protected set; }
         public CHPFile(string filename, Encoding? encoding = null)
         {
             Loaded = false;
@@ -198,15 +198,15 @@ namespace CHPEditor
                 FilePath = filename;
 
                 AnimeCollection = new AnimeData[18];
-                InterpolateCollection = new InterpolateData[18];
+                TweenCollection = new TweenData[18];
                 for (int i = 0; i < 18; i++)
                 {
                     AnimeCollection[i].Pattern = new List<AnimeData.PatternData>();
                     AnimeCollection[i].Texture = new List<AnimeData.TextureData>();
                     AnimeCollection[i].Layer = new List<AnimeData.PatternData>();
-                    InterpolateCollection[i].Pattern = new List<InterpolateData.PatternData>();
-                    InterpolateCollection[i].Texture = new List<InterpolateData.TextureData>();
-                    InterpolateCollection[i].Layer = new List<InterpolateData.PatternData>();
+                    TweenCollection[i].Pattern = new List<TweenData.PatternData>();
+                    TweenCollection[i].Texture = new List<TweenData.TextureData>();
+                    TweenCollection[i].Layer = new List<TweenData.PatternData>();
                 }
 
                 filedata = filedata.Replace("\r\n", "\n");
@@ -358,7 +358,7 @@ namespace CHPEditor
                                     Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 } );
 
-                                InterpolateCollection[patern].Pattern.Add(new InterpolateData.PatternData() 
+                                TweenCollection[patern].Pattern.Add(new TweenData.PatternData() 
                                 {
                                     Sprite = ParseFromInts(AnimeCollection[patern].Pattern.Last().Sprite, frame),
                                     Offset = ParseFromInts(AnimeCollection[patern].Pattern.Last().Offset, frame)
@@ -386,7 +386,7 @@ namespace CHPEditor
                                     Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 });
 
-                                InterpolateCollection[texture].Texture.Add(new InterpolateData.TextureData()
+                                TweenCollection[texture].Texture.Add(new TweenData.TextureData()
                                 {
                                     Sprite = ParseFromInts(AnimeCollection[texture].Texture.Last().Sprite, texframe),
                                     Offset = ParseFromInts(AnimeCollection[texture].Texture.Last().Offset, texframe),
@@ -414,7 +414,7 @@ namespace CHPEditor
                                     Comment = containsComment ? line.Substring(line.IndexOf("//") + 2).Trim() : ""
                                 });
 
-                                InterpolateCollection[layer].Layer.Add(new InterpolateData.PatternData()
+                                TweenCollection[layer].Layer.Add(new TweenData.PatternData()
                                 {
                                     Sprite = ParseFromInts(AnimeCollection[layer].Layer.Last().Sprite, layframe),
                                     Offset = ParseFromInts(AnimeCollection[layer].Layer.Last().Offset, layframe)
@@ -603,26 +603,26 @@ namespace CHPEditor
 
             return result;
         }
-        private InterpolateData.InterpolateKey[] ParseFromInts(int[] array, int frame)
+        private TweenData.TweenKey[] ParseFromInts(int[] array, int frame)
         {
             if (array.Length == 0) return [];
 
-            var keys = new List<InterpolateData.InterpolateKey>();
-            var key = new InterpolateData.InterpolateKey();
+            var keys = new List<TweenData.TweenKey>();
+            var key = new TweenData.TweenKey();
 
             for (int i = 0; i < array.Length; i++)
             {
                 if (array[i] == -1)
                     key.Length += frame;
 
-                if ((i > 0) && (i + 1 < array.Length)) // Balance out single keyframe between two interpolations
+                if ((i > 0) && (i + 1 < array.Length)) // Balance out single keyframe between two tweens
                 {
                     if (array[i] != -1 && array[i - 1] == -1 && array[i + 1] == -1)
                     {
                         key.Length -= frame;
                     }
                 }
-                if (i > 0) // Mark end of interpolating key
+                if (i > 0) // Mark end of tween key
                 {
                     if (array[i] != -1 && array[i - 1] == -1)
                     {
@@ -631,11 +631,11 @@ namespace CHPEditor
                         keys.Add(key);
                     }
                 }
-                if (i + 1 < array.Length) // Mark start of interpolating key
+                if (i + 1 < array.Length) // Mark start of tween key
                 {
                     if (array[i] != -1 && array[i + 1] == -1)
                     {
-                        key = new InterpolateData.InterpolateKey()
+                        key = new TweenData.TweenKey()
                         {
                             Start = frame * i,
                             Length = frame,
@@ -699,7 +699,7 @@ namespace CHPEditor
                     RectCollection = [];
                     RectComments = [];
                     AnimeCollection = [];
-                    InterpolateCollection = [];
+                    TweenCollection = [];
                 }
 
                 CharBMP.ImageFile?.Dispose();

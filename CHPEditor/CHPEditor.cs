@@ -481,45 +481,45 @@ void main()
                                 continue;
 
                         var pattern = ChpFile.AnimeCollection[state].Pattern[i];
-                        var inter = ChpFile.InterpolateCollection[state].Pattern[i];
+                        var tween = ChpFile.TweenCollection[state].Pattern[i];
                         int framecap = Math.Clamp(currentframe, 0, pattern.Sprite.Length - 1);
 
                         int spriteindex = pattern.Sprite[framecap];
                         int offsetindex = framecap < pattern.Offset.Length ? pattern.Offset[framecap] : -1;
-                        bool[] isInterpole = [false, false];
+                        bool[] isTween = [false, false];
 
                         #region Set Rects
                         Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
                         Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
 
-                        for (int j = 0; j < inter.Sprite.Length; j++)
+                        for (int j = 0; j < tween.Sprite.Length; j++)
                         {
-                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
+                            if (tween.Sprite[j].Start <= currenttime && tween.Sprite[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
-                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[0] = true;
+                                double progress = (double)(currenttime - tween.Sprite[j].Start) / (double)tween.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[tween.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[0] = true;
                             }
                         }
 
-                        for (int j = 0; j < inter.Offset.Length; j++)
+                        for (int j = 0; j < tween.Offset.Length; j++)
                         {
-                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
+                            if (tween.Offset[j].Start <= currenttime && tween.Offset[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
-                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[1] = true;
+                                double progress = (double)(currenttime - tween.Offset[j].Start) / (double)tween.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[tween.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[1] = true;
                             }
                         }
 
-                        if (!isInterpole[0] && spriteindex != -1)
+                        if (!isTween[0] && spriteindex != -1)
                             sprite = ChpFile.RectCollection[spriteindex];
 
-                        if (!isInterpole[1] && offsetindex != -1)
+                        if (!isTween[1] && offsetindex != -1)
                             offset = ChpFile.RectCollection[offsetindex];
-                        else if (!isInterpole[1] && offsetindex == -1)
+                        else if (!isTween[1] && offsetindex == -1)
                             offset.Size = sprite.Size;
 
                         offset.Origin.X += anchor_x;
@@ -578,7 +578,7 @@ void main()
                                 continue;
 
                         var texture = ChpFile.AnimeCollection[state].Texture[i];
-                        var inter = ChpFile.InterpolateCollection[state].Texture[i];
+                        var tween = ChpFile.TweenCollection[state].Texture[i];
                         int framecap = Math.Clamp(currentframe, 0, texture.Sprite.Length - 1);
 
                         int spriteindex = framecap < texture.Sprite.Length ? texture.Sprite[framecap] : -1;
@@ -586,7 +586,7 @@ void main()
                         int alphaindex = framecap < texture.Alpha.Length ? texture.Alpha[framecap] : -1;
                         int rotationindex = framecap < texture.Rotation.Length ? texture.Rotation[framecap] : -1;
 
-                        bool[] isInterpole = [false, false, false, false];
+                        bool[] isTween = [false, false, false, false];
 
                         #region Set Rects/Ints
                         Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
@@ -594,61 +594,61 @@ void main()
                         float alpha = 1.0f;
                         double rotation = 0.0;
 
-                        for (int j = 0; j < inter.Sprite.Length; j++)
+                        for (int j = 0; j < tween.Sprite.Length; j++)
                         {
-                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
+                            if (tween.Sprite[j].Start <= currenttime && tween.Sprite[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
-                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[0] = true;
+                                double progress = (double)(currenttime - tween.Sprite[j].Start) / (double)tween.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[tween.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[0] = true;
                             }
                         }
 
-                        for (int j = 0; j < inter.Offset.Length; j++)
+                        for (int j = 0; j < tween.Offset.Length; j++)
                         {
-                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
+                            if (tween.Offset[j].Start <= currenttime && tween.Offset[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
-                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[1] = true;
+                                double progress = (double)(currenttime - tween.Offset[j].Start) / (double)tween.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[tween.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[1] = true;
                             }
                         }
 
-                        for (int j = 0; j < inter.Alpha.Length; j++)
+                        for (int j = 0; j < tween.Alpha.Length; j++)
                         {
-                            if (inter.Alpha[j].Start <= currenttime && inter.Alpha[j].End >= currenttime)
+                            if (tween.Alpha[j].Start <= currenttime && tween.Alpha[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Alpha[j].Start) / (double)inter.Alpha[j].Length;
-                                var diff = inter.Alpha[j].StartIndex + (int)((inter.Alpha[j].EndIndex - inter.Alpha[j].StartIndex) * progress);
+                                double progress = (double)(currenttime - tween.Alpha[j].Start) / (double)tween.Alpha[j].Length;
+                                var diff = tween.Alpha[j].StartIndex + (int)((tween.Alpha[j].EndIndex - tween.Alpha[j].StartIndex) * progress);
                                 alpha = diff / 255.0f;
-                                isInterpole[2] = true;
+                                isTween[2] = true;
                             }
                         }
 
-                        for (int j = 0; j < inter.Rotation.Length; j++)
+                        for (int j = 0; j < tween.Rotation.Length; j++)
                         {
-                            if (inter.Rotation[j].Start <= currenttime && inter.Rotation[j].End >= currenttime)
+                            if (tween.Rotation[j].Start <= currenttime && tween.Rotation[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Rotation[j].Start) / (double)inter.Rotation[j].Length;
-                                var diff = inter.Rotation[j].StartIndex + (int)((inter.Rotation[j].EndIndex - inter.Rotation[j].StartIndex) * progress);
+                                double progress = (double)(currenttime - tween.Rotation[j].Start) / (double)tween.Rotation[j].Length;
+                                var diff = tween.Rotation[j].StartIndex + (int)((tween.Rotation[j].EndIndex - tween.Rotation[j].StartIndex) * progress);
                                 rotation = (diff / 255.0) * 360.0;
-                                isInterpole[3] = true;
+                                isTween[3] = true;
                             }
                         }
 
-                        if (!isInterpole[0] && spriteindex != -1)
+                        if (!isTween[0] && spriteindex != -1)
                             sprite = ChpFile.RectCollection[spriteindex];
 
-                        if (!isInterpole[1] && offsetindex != -1)
+                        if (!isTween[1] && offsetindex != -1)
                             offset = ChpFile.RectCollection[offsetindex];
-                        else if (!isInterpole[1] && offsetindex == -1)
+                        else if (!isTween[1] && offsetindex == -1)
                             offset.Size = sprite.Size;
 
-                        if (!isInterpole[2] && alphaindex != -1)
+                        if (!isTween[2] && alphaindex != -1)
                             alpha = alphaindex / 255.0f;
-                        if (!isInterpole[3] && rotationindex != -1)
+                        if (!isTween[3] && rotationindex != -1)
                             rotation = (rotationindex / 255.0) * 360.0;
 
                         offset.Origin.X += anchor_x;
@@ -672,45 +672,45 @@ void main()
                                 continue;
 
                         var layer = ChpFile.AnimeCollection[state].Layer[i];
-                        var inter = ChpFile.InterpolateCollection[state].Layer[i];
+                        var tween = ChpFile.TweenCollection[state].Layer[i];
                         int framecap = Math.Clamp(currentframe, 0, layer.Sprite.Length - 1);
 
                         int spriteindex = layer.Sprite[framecap];
                         int offsetindex = framecap < layer.Offset.Length ? layer.Offset[framecap] : -1;
-                        bool[] isInterpole = [false, false];
+                        bool[] isTween = [false, false];
 
                         #region Set Rects
                         Rectangle<int> sprite = new Rectangle<int>(0, 0, 0, 0);
                         Rectangle<int> offset = new Rectangle<int>(0, 0, 0, 0);
 
-                        for (int j = 0; j < inter.Sprite.Length; j++)
+                        for (int j = 0; j < tween.Sprite.Length; j++)
                         {
-                            if (inter.Sprite[j].Start <= currenttime && inter.Sprite[j].End >= currenttime)
+                            if (tween.Sprite[j].Start <= currenttime && tween.Sprite[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Sprite[j].Start) / (double)inter.Sprite[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Sprite[j].StartIndex]);
-                                sprite = ChpFile.RectCollection[inter.Sprite[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[0] = true;
+                                double progress = (double)(currenttime - tween.Sprite[j].Start) / (double)tween.Sprite[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Sprite[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Sprite[j].StartIndex]);
+                                sprite = ChpFile.RectCollection[tween.Sprite[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[0] = true;
                             }
                         }
 
-                        for (int j = 0; j < inter.Offset.Length; j++)
+                        for (int j = 0; j < tween.Offset.Length; j++)
                         {
-                            if (inter.Offset[j].Start <= currenttime && inter.Offset[j].End >= currenttime)
+                            if (tween.Offset[j].Start <= currenttime && tween.Offset[j].End >= currenttime)
                             {
-                                double progress = (double)(currenttime - inter.Offset[j].Start) / (double)inter.Offset[j].Length;
-                                var diff = ChpFile.RectCollection[inter.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[inter.Offset[j].StartIndex]);
-                                offset = ChpFile.RectCollection[inter.Offset[j].StartIndex].Add(diff.Multiply(progress));
-                                isInterpole[1] = true;
+                                double progress = (double)(currenttime - tween.Offset[j].Start) / (double)tween.Offset[j].Length;
+                                var diff = ChpFile.RectCollection[tween.Offset[j].EndIndex].Subtract(ChpFile.RectCollection[tween.Offset[j].StartIndex]);
+                                offset = ChpFile.RectCollection[tween.Offset[j].StartIndex].Add(diff.Multiply(progress));
+                                isTween[1] = true;
                             }
                         }
 
-                        if (!isInterpole[0] && spriteindex != -1)
+                        if (!isTween[0] && spriteindex != -1)
                             sprite = ChpFile.RectCollection[spriteindex];
 
-                        if (!isInterpole[1] && offsetindex != -1)
+                        if (!isTween[1] && offsetindex != -1)
                             offset = ChpFile.RectCollection[offsetindex];
-                        else if (!isInterpole[1] && offsetindex == -1)
+                        else if (!isTween[1] && offsetindex == -1)
                             offset.Size = sprite.Size;
 
                         offset.Origin.X += anchor_x;
