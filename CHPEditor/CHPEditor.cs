@@ -55,6 +55,10 @@ namespace CHPEditor
         public static int hideTexCount = 0;
         public static int hideLayCount = 0;
 
+        public static ImageFileManager DanceBG;
+
+        public static System.Numerics.Vector4 GLColor = new(0, 1, 0, 1);
+
 #if DEBUG
         public static bool showDebug = false;
 #endif
@@ -62,7 +66,7 @@ namespace CHPEditor
 
         private static Assembly _assembly = Assembly.GetExecutingAssembly();
 
-        private static readonly string window_title = "CHPEditor INDEV " + Assembly.GetExecutingAssembly().GetName().Version
+        private static readonly string window_title = "CHPEditor INDEV " + Assembly.GetExecutingAssembly().GetName().Version + " (Preview Build #1)"
             #if DEBUG
             + " (DEBUG)"
             #endif
@@ -95,7 +99,6 @@ namespace CHPEditor
             _window.FramebufferResize += Resize;
             _window.Closing += Closing;
             _window.FileDrop += FileDrop;
-
 #if !DEBUG
             try
             {
@@ -120,7 +123,7 @@ namespace CHPEditor
             if (files.Length > 0)
             {
                 FileInfo file = new FileInfo(files[0]);
-                if (file.Extension.ToLower() == ".chp")
+                if (file.Extension.Equals(".chp", StringComparison.OrdinalIgnoreCase))
                 {
                     Config.Path = file.FullName;
                     ImGuiManager.ReloadFile(file.FullName);
@@ -160,11 +163,12 @@ namespace CHPEditor
         {
             #region Window & ImGUI Setup
             _gl = _window.CreateOpenGL();
-            _gl.ClearColor(0.78f, 0.78f, 1f, 1f);
+            _gl.ClearColor(Config.WindowColor.X, Config.WindowColor.Y, Config.WindowColor.Z, Config.WindowColor.W);
 
             IInputContext input = _window.CreateInput();
 
-            for (int i = 0; i < input.Mice.Count; i++) { input.Mice[i].Scroll += MouseScroll; }
+            foreach (var mouse in input.Mice) { mouse.Scroll += MouseScroll; }
+            foreach (var keyboard in input.Keyboards) { keyboard.KeyDown += KeyPressed; }
 
             _controller = new ImGuiController(_gl, _window, input);
             IO = ImGui.GetIO();
@@ -306,6 +310,7 @@ void main()
             ChpFile = new CHPFile(Config.Path);
             ImGuiManager.Initialize();
             ImGuiManager.UpdateCHPStats();
+            DanceBG = new ImageFileManager("skin/Default/dance.png");
         }
 
         static void Update(double deltaTime)
@@ -356,6 +361,8 @@ void main()
 
             ImGuiManager.Draw();
 
+            //UIManager.Draw();
+
             _controller.Render();
         }
         static void Resize(Vector2D<int> size)
@@ -375,6 +382,10 @@ void main()
                         (_window.Size.Y / 2) * -value
                         );
             }
+        }
+        private static void KeyPressed(IKeyboard keyboard, Key key, int value)
+        {
+            if (key == Key.Space) pause = !pause;
         }
         // Texture Drawing
         static void RenderTex(CHPFile.BitmapData data)
@@ -453,6 +464,19 @@ void main()
 
                     Rectangle<int> dst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) };
                     if (!Config.UseCharaSizeForBackground) { dst.Size = new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height); }
+                    
+                    // Change crop boundaries if animation is set to Dance
+                    if (state == 13)
+                    {
+                        dst = new Rectangle<int>()
+                        {
+                            Origin = new((_window.FramebufferSize.X / 2) - (Config.DanceSize.Width / 2),
+                            (_window.FramebufferSize.Y / 2) - (Config.DanceSize.Height / 2)),
+
+                            Size = new(Config.DanceSize.Width, Config.DanceSize.Height)
+                        };
+                    }
+
                     Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
                     Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(ChpFile.RectCollection[0].Size.X, ChpFile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
 
@@ -469,6 +493,10 @@ void main()
                             ChpFile.Draw(ref ChpFile.CharBMP, ChpFile.RectCollection[1], bgdst);
                             ChpFile.Draw(ref ChpFile.CharBMP, ChpFile.RectCollection[0], namedst);
                         }
+                    }
+                    if (state == 13)
+                    {
+                        DanceBG.Draw(dst.Origin.X, dst.Origin.Y);
                     }
 
                     // Pattern
@@ -530,6 +558,9 @@ void main()
                         }
                         #endregion
 
+                        if (Config.DoNotDrawOnePixelSprites)
+                            if (sprite.Size.X == 1 && sprite.Size.Y == 1) continue;
+
                         #region Crop
                         Rectangle<int> crop_amount = new Rectangle<int>()
                         {
@@ -561,7 +592,7 @@ void main()
 
                         // Skip drawing if any rects have zero width or zero height
                         if (crop_rect.Size.X == 0 || crop_rect.Size.Y == 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
-                        #endregion
+                            #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
                             ChpFile.Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
@@ -654,6 +685,9 @@ void main()
                         offset.Origin.Y += anchor_y;
                         #endregion
 
+                        if (Config.DoNotDrawOnePixelSprites)
+                            if (sprite.Size.X == 1 && sprite.Size.Y == 1) continue;
+
                         // Skip drawing if any rects have zero width or zero height
                         if (sprite.Size.X == 0 || sprite.Size.Y == 0 || offset.Size.X <= 0 || offset.Size.Y <= 0) continue;
 
@@ -721,6 +755,9 @@ void main()
                         }
                         #endregion
 
+                        if (Config.DoNotDrawOnePixelSprites)
+                            if (sprite.Size.X == 1 && sprite.Size.Y == 1) continue;
+
                         #region Crop
                         Rectangle<int> crop_amount = new Rectangle<int>()
                         {
@@ -752,7 +789,7 @@ void main()
                         
                         // Skip drawing if any rects have zero width or zero height
                         if (crop_rect.Size.X == 0 || crop_rect.Size.Y == 0 || crop_dst.Size.X <= 0 || crop_dst.Size.Y <= 0) continue;
-                        #endregion
+                            #endregion
 
                         if (use2P && ChpFile.CharBMP2P.Loaded)
                             ChpFile.Draw(ref ChpFile.CharBMP2P, crop_rect, crop_dst);
@@ -770,7 +807,7 @@ void main()
                 }
                 else if (anishow != anistate)
                 {
-                    Trace.TraceWarning("State #" + anishow + " is not loaded. Nothing will be displayed.");
+                    Trace.TraceWarning($"Animation #{anishow} is not loaded. Nothing will be displayed.");
                     anistate = anishow;
                 }            
         }

@@ -1,4 +1,4 @@
-﻿(CHPEditor Version 0.1.2.4)
+﻿(CHPEditor Version 0.2.0.0 - Preview Build #1)
 
 These files can only be previewed. There is no ability to edit these files yet.
 Being able to actually edit Pomyu Charas will take a while for me to implement. Thank you for your patience.

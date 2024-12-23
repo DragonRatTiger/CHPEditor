@@ -168,15 +168,7 @@ namespace CHPEditor
                     return System.IO.Path.GetExtension(Path) == ".bmp";
                 }
             }
-            public bool Loaded
-            {
-                get
-                {
-                    if (ImageFile == null)
-                        return false;
-                    return ImageFile.Loaded;
-                }
-            }
+            public bool Loaded => ImageFile?.Loaded ?? false;
         }
 
         public string CharName = "";
@@ -194,14 +186,16 @@ namespace CHPEditor
         public Rectangle<int>[] RectCollection = [];
         public string[] RectComments = [];
 
-        public AnimeData[] AnimeCollection { get; protected set; } = new AnimeData[(int)StateNames.COUNT];
-        public TweenData[] TweenCollection { get; protected set; } = new TweenData[(int)StateNames.COUNT];
+        public AnimeData[] AnimeCollection { get; protected set; } = new AnimeData[(int)AnimationNames.COUNT];
+        public TweenData[] TweenCollection { get; protected set; } = new TweenData[(int)AnimationNames.COUNT];
+
+        private int _lineCount = 1;
         public CHPFile(string filename, Encoding? encoding = null)
         {
             Loaded = false;
             Error = "";
 
-            int linecount = 1;
+            _lineCount = 1;
 
             try
             {
@@ -213,8 +207,9 @@ namespace CHPEditor
 
                 filedata = filedata.Replace("\r\n", "\n");
                 string[] lines = filedata.Split("\n");
+                bool sizeIsSet = false;
 
-                for (int i = 0; i < (int)StateNames.COUNT; i++)
+                for (int i = 0; i < (int)AnimationNames.COUNT; i++)
                 {
                     AnimeCollection[i].Pattern = new List<AnimeData.PatternData>();
                     AnimeCollection[i].Texture = new List<AnimeData.TextureData>();
@@ -226,7 +221,7 @@ namespace CHPEditor
 
                 foreach (string line in lines)
                 {
-                    if (!(line.StartsWith("/") || line.StartsWith("//") || string.IsNullOrWhiteSpace(line)))
+                    if (!(line.StartsWith('/') || line.StartsWith("//") || string.IsNullOrWhiteSpace(line)))
                     {
                         // parsing time :)
                         bool containsComment = line.IndexOf("//") > -1;
@@ -301,6 +296,7 @@ namespace CHPEditor
                                     else Trace.TraceError($"Failed to parse Size height value. \"{split[2]}\" was not recognized as an integer. Did you write it correctly?");
                                 }
                                 else { Trace.TraceError("Attempted to find the character's height when reading #Size, but no value was found."); }
+                                sizeIsSet = true;
                                 break;
 
                             case "#wait":
@@ -309,8 +305,17 @@ namespace CHPEditor
                                 break;
 
                             case "#data":
+                                //if (!sizeIsSet) { Size = new(167, 271); sizeIsSet = true; }
                                 if (!int.TryParse(split[1], out Data))
                                     Trace.TraceError($"Failed to parse Data value. \"{split[1]}\" was not recognized as an integer. Did you write it correctly?");
+                                RectCollection = new Rectangle<int>[Data * Data];
+                                RectComments = new string[Data * Data];
+
+                                for (int i = 0; i < RectCollection.Length; i++)
+                                {
+                                    RectCollection[i] = new Rectangle<int>(0, 0, 0, 0);
+                                    RectComments[i] = "";
+                                }
                                 IsLegacy = false;
                                 break;
                             
@@ -356,7 +361,7 @@ namespace CHPEditor
 
                                 if (split.Length < 3)
                                 {
-                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    Trace.TraceError($"{split[0]} was defined on line {_lineCount}, but does not contain any keyframes to parse. Skipping this line.");
                                     break;
                                 }
 
@@ -382,7 +387,7 @@ namespace CHPEditor
                             case "#texture":
                                 if (split.Length < 3)
                                 {
-                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    Trace.TraceError($"{split[0]} was defined on line {_lineCount}, but does not contain any keyframes to parse. Skipping this line.");
                                     break;
                                 }
 
@@ -412,7 +417,7 @@ namespace CHPEditor
                             case "#layer":
                                 if (split.Length < 3)
                                 {
-                                    Trace.TraceError($"{split[0]} was defined on line {linecount}, but does not contain any keyframes to parse. Skipping this line.");
+                                    Trace.TraceError($"{split[0]} was defined on line {_lineCount}, but does not contain any keyframes to parse. Skipping this line.");
                                     break;
                                 }
 
@@ -448,7 +453,7 @@ namespace CHPEditor
                                     }
                                 }
 
-                                if (IsLegacy && int.TryParse(split[0].Substring(1, 2), NumberStyles.Integer, null, out int number))
+                                if (IsLegacy && TryParseFromHex(split[0].Substring(1, Math.Clamp(split[0].Length - 1, 0, 2)), 10, out int number))
                                 {
                                     if (split.Length >= 2)
                                         RectCollection[number].Origin.X = int.TryParse(split[1], out int x) ? x : 0;
@@ -460,12 +465,12 @@ namespace CHPEditor
                                         RectCollection[number].Size.Y = int.TryParse(split[4], out int h) ? h : 0;
 
                                     if (split.Length < 5)
-                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
+                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {_lineCount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
 
                                     if (containsComment)
                                         RectComments[number] = line.Substring(line.IndexOf("//") + 2).Trim();
                                 }
-                                else if (TryParseFromHex(split[0].Substring(1, 2), Data, out int number_from_hex))
+                                else if (TryParseFromHex(split[0].Substring(1, Math.Clamp(split[0].Length - 1, 0, 2)), Data, out int number_from_hex))
                                 {
                                     if (split.Length >= 2)
                                         RectCollection[number_from_hex].Origin.X = int.TryParse(split[1], out int x) ? x : 0;
@@ -477,7 +482,7 @@ namespace CHPEditor
                                         RectCollection[number_from_hex].Size.Y = int.TryParse(split[4], out int h) ? h : 0;
 
                                     if (split.Length < 5)
-                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {linecount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
+                                        Trace.TraceWarning($"#{split[0].Substring(1, 2)} at line {_lineCount} does not contain a full rect. Only {split.Length - 1} out of 4 values were found.");
 
                                     if (containsComment)
                                         RectComments[number_from_hex] = line.Substring(line.IndexOf("//") + 2).Trim();
@@ -485,7 +490,7 @@ namespace CHPEditor
                                 break;
                         }
                     }
-                    linecount++;
+                    _lineCount++;
                 }
                 for (int i = 0; i < AnimeCollection.Length; i++)
                 {
@@ -512,7 +517,7 @@ namespace CHPEditor
                     AnimeCollection[i].FrameCount = all_lengths.Count > 0 ? all_lengths.Min() : 0;
 
                     if (all_lengths.Distinct().Count() > 1)
-                        Trace.TraceWarning("State #" + (i+1) + " contains differing amounts of frames.\n" +
+                        Trace.TraceWarning("Animation #" + (i+1) + " contains differing amounts of frames.\n" +
                             "This may break applications that try to display Pomyu Charas.\n" +
                             "Only the minimum amount of frames (" + all_lengths.Min() + ") will be displayed here.\n" +
                             "Frame Counts: " + (string.Join(",", all_lengths.Select(len => len.ToString()).ToArray())));
@@ -531,7 +536,7 @@ namespace CHPEditor
             }
             catch (Exception e)
             {
-                string err = "Something went wrong while trying to read the requested CHP file at line " + linecount + ". More details:" + Environment.NewLine + e;
+                string err = "Something went wrong while trying to read the requested CHP file at line " + _lineCount + ". More details:" + Environment.NewLine + e;
                 Trace.TraceError(err);
                 Error = err;
             }
@@ -542,6 +547,16 @@ namespace CHPEditor
         {
             data.Path = filepath;
             data.ImageFile = new ImageFileManager(GetPath(data.Path), true);
+
+            if (data.IsBMPFile && CHPEditor.Config.IgnoreBitmapAlpha && data.Loaded) {
+                byte[] pixels = data.ImageFile.Image.Data;
+                for (int i = 3; i < pixels.Length; i += 4)
+                {
+                    pixels[i] = 255;
+                }
+                data.ImageFile.UpdateImage(pixels);
+            }
+
             data.ColorKeyType = colorKey;
 
             if (colorKey == ColorKeyType.Auto && data.ImageFile.Loaded)
@@ -575,7 +590,7 @@ namespace CHPEditor
 
         private int ParseFromHex(string hex, int baseSize = 16)
         {
-            if (baseSize > 36) { throw new ArgumentException($"CHPEditor does not support a Base size greater than 36 for CHP files. Consider setting #Data to 16 or 36. If you need more than 1296 rects, consider reducing your rect count. (Base size given was {baseSize}.)"); }
+            if (baseSize > 36) { throw new ArgumentOutOfRangeException($"CHPEditor does not support a Base size greater than 36 for CHP files. Consider setting #Data to 16 or 36. If you need more than 1296 rects, consider reducing your rect count. (Base size given was {baseSize}.)"); }
 
             const string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             //const string base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // Unsure if supporting this is necessary at all. Leaving this here just in case.
@@ -610,7 +625,16 @@ namespace CHPEditor
                 if (item == "--")
                     result[i] = -1;
                 else
-                    result[i] = ParseFromHex(item, baseSize);
+                    try
+                    {
+                        result[i] = ParseFromHex(item, baseSize);
+                    }
+                    catch (Exception e)
+                    {
+                        if (i == 0) { throw new InvalidOperationException($"The first frame's hex value '{item}' on line {_lineCount} is invalid, and has no previous frame to fallback to."); }
+                        Trace.TraceWarning($"Failed to parse frame {i}'s hex '{item}' on line {_lineCount}. Falling back to previous frame's hex '{hex.Substring((i-1) * length, length)}'. Details: {e.Message}");
+                        result[i] = result[i - 1];
+                    }
             }
 
             return result;

@@ -1,9 +1,9 @@
-# CHPEditor (0.1.2.4) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
+# CHPEditor (0.2.0.0) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
 ## An (extremely not finished) application for ~~editing~~ previewing CHP (Pomyu Chara) files
 
-![Screenshot of CHPEditor version 0.1.2.4, displaying Moji-kun from Mojipittan doing his fever win animation](readme/0.png)
+![Screenshot of a preview build of CHPEditor version 0.2.0.0, displaying Balrog from Cave Story doing its Good animation](readme/0.png)
 
-*Moji-kun (もじくん) from Mojipittan (もじぴったん), animated by [Nanoka (なのか)](https://082f.xxxxxxxx.jp)*
+*Balrog/Barlog (バルログ) from Cave Story (洞窟物語), animated by [Masato Ishio (石王マサト)](http://www8.plala.or.jp/stone-king/)*
 
 Alongside being a personal project to further study C# & application development, I hope to also create a modern editor for Pomyu Charas.
 

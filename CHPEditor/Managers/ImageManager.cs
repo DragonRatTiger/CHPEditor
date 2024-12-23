@@ -10,7 +10,7 @@ namespace CHPEditor
     {
         public bool Loaded = false;
 
-        public ImageResult Image { get; private set; }
+        public ImageResult Image { get; set; }
         public uint Pointer { get; private set; }
         public int Width => Image.Width;
         public int Height => Image.Height;
@@ -55,7 +55,14 @@ namespace CHPEditor
         public unsafe void LoadImage()
         {
             if (Pointer == 0)
+            {
                 Pointer = CHPEditor._gl.GenTexture();
+            }
+            else
+            {
+                CHPEditor._gl.DeleteTexture(Pointer);
+                Pointer = CHPEditor._gl.GenTexture();
+            }
 
             CHPEditor._gl.ActiveTexture(TextureUnit.Texture0);
             CHPEditor._gl.BindTexture(TextureTarget.Texture2D, Pointer);
@@ -73,7 +80,11 @@ namespace CHPEditor
         public unsafe void UpdateImage(byte[] data)
         {
             Image.Data = data;
-            LoadImage();
+
+            CHPEditor._gl.BindTexture(TextureTarget.Texture2D, Pointer);
+            fixed (byte* ptr = Image.Data)
+                CHPEditor._gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)Image.Width, (uint)Image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+            CHPEditor._gl.BindTexture(TextureTarget.Texture2D, 0);
         }
         public unsafe void Draw(int x, int y)
         {
@@ -82,7 +93,8 @@ namespace CHPEditor
             Draw(rect, offset);
         }
         public unsafe void Draw(Rectangle<int> rect, Rectangle<int> offset) { Draw(rect, offset, 0.0, 1.0f); }
-        public unsafe void Draw(Rectangle<int> rect, Rectangle<int> offset, double rot, float alpha, float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f)
+        public unsafe void Draw(Rectangle<int> rect, Rectangle<int> offset, double rot,
+            float alpha, float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f)
         {
             float RectX = (float)rect.Origin.X / Image.Width;
             float RectY = (float)rect.Origin.Y / Image.Height;

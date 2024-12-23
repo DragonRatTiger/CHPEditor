@@ -12,11 +12,11 @@ namespace CHPEditor
 {
     static class ImGuiManager
     {
-        public static Highlighter Highlight { get; private set; } = new Highlighter(0xff, 0x3c, 0xff, 0xff);
-        public static Vector4 Color = new Vector4(1.0f, 0.235f, 1.0f, 1.0f);
+        public static Highlighter Highlight { get; private set; } = new(0xff, 0x3c, 0xff, 0xff);
+        public static Vector4 Color = new(1.0f, 0.235f, 1.0f, 1.0f);
 
         public static bool ImGuiIsActive = false;
-        public static Vector2 BackgroundOffset = new Vector2(0, 0);
+        public static Vector2 BackgroundOffset = new(0, 0);
         public static float BackgroundZoom
         {
             get { return zoom; }
@@ -34,7 +34,7 @@ namespace CHPEditor
         private static string[] UsedRectsPreview = [];
         public static int SelectedRect = 0;
 
-        private static string[] StateNames = new string[18];
+        private static readonly string[] StateNames = new string[18];
         private static string[] PatternNames = [];
         private static string[] TextureNames = [];
         private static string[] LayerNames = [];
@@ -45,7 +45,7 @@ namespace CHPEditor
 
         private static int CurrentFrame = 0;
 
-        private static ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking;
+        private static readonly ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking;
 
         public static void Initialize()
         {
@@ -171,7 +171,7 @@ namespace CHPEditor
                 if (!CHPEditor.anitoggle)
                 {
                     string bmpname = LangManager.GetValue("CHP_BMP_PATH_NONE");
-                    Vector2D<int> bmpsize = new Vector2D<int>(0, 0);
+                    Vector2D<int> bmpsize = new(0, 0);
                     System.Drawing.Color bmpcolor = System.Drawing.Color.Transparent;
                     switch (CHPEditor.bmpstate)
                     {
@@ -529,7 +529,7 @@ namespace CHPEditor
                             ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern];
-                            if (ImGui.InputText("Label", ref currentref.Comment, 128))
+                            if (ImGui.InputText("Label###PATTERN_EDIT_LABEL", ref currentref.Comment, 128))
                             {
                                 CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern[SelectedPattern] = currentref;
                                 UpdatePatternNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Pattern);
@@ -651,7 +651,7 @@ namespace CHPEditor
                             ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture];
-                            if (ImGui.InputText("Label", ref currentref.Comment, 128))
+                            if (ImGui.InputText("Label###TEXTURE_EDIT_LABEL", ref currentref.Comment, 128))
                             {
                                 CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture[SelectedTexture] = currentref;
                                 UpdateTextureNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Texture);
@@ -878,7 +878,7 @@ namespace CHPEditor
                             ImGui.BeginDisabled(!CHPEditor.pause || istweening);
 
                             var currentref = CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer];
-                            if (ImGui.InputText("Label", ref currentref.Comment, 128))
+                            if (ImGui.InputText("Label###LAYER_EDIT_LABEL", ref currentref.Comment, 128))
                             {
                                 CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer[SelectedLayer] = currentref;
                                 UpdateLayerNames(ref CHPEditor.ChpFile.AnimeCollection[CHPEditor.anishow - 1].Layer);
@@ -974,6 +974,39 @@ namespace CHPEditor
                     }
 
                     ImGui.EndTabItem();
+                }
+                #endregion
+                #region Settings
+                if (ImGui.BeginTabItem("Settings"))
+                {
+                    if (ImGui.ColorPicker4("Window Color", ref CHPEditor.Config.WindowColor, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.DisplayHex)) {
+                        CHPEditor._gl.ClearColor(CHPEditor.Config.WindowColor.X, CHPEditor.Config.WindowColor.Y, CHPEditor.Config.WindowColor.Z, CHPEditor.Config.WindowColor.W);
+                    }
+                    ImGui.EndTabItem();
+
+                    ImGui.SeparatorText("Experimental/Research Settings");
+                    ImGui.Text("Please don't touch these settings\nunless you know what you're doing!");
+
+                    int name_size_x = CHPEditor.Config.NameSize.Width;
+                    int name_size_y = CHPEditor.Config.NameSize.Height;
+                    ImGui.Checkbox("Use Config for NameSize", ref CHPEditor.Config.UseDataSizeForName);
+                    if (ImGui.InputInt("NameSize X", ref name_size_x)) CHPEditor.Config.NameSize.Width = Math.Clamp(name_size_x, 1, int.MaxValue);
+                    if (ImGui.InputInt("NameSize Y", ref name_size_y)) CHPEditor.Config.NameSize.Height = Math.Clamp(name_size_y, 1, int.MaxValue);
+                    int bg_size_x = CHPEditor.Config.BackgroundSize.Width;
+                    int bg_size_y = CHPEditor.Config.BackgroundSize.Height;
+                    ImGui.Checkbox("Use Chara Size for BackgroundSize", ref CHPEditor.Config.UseCharaSizeForBackground);
+                    if (ImGui.InputInt("BackgroundSize X", ref bg_size_x)) CHPEditor.Config.BackgroundSize.Width = Math.Clamp(bg_size_x, 1, int.MaxValue);
+                    if (ImGui.InputInt("BackgroundSize Y", ref bg_size_y)) CHPEditor.Config.BackgroundSize.Height = Math.Clamp(bg_size_y, 1, int.MaxValue);
+                    ImGui.Checkbox("Ignore Bitmap Alpha", ref CHPEditor.Config.IgnoreBitmapAlpha);
+                    if (ImGui.IsItemHovered())
+                    {
+                        if (ImGui.BeginItemTooltip())
+                        {
+                            ImGui.Text("You must reload the CHP file to see the changes.");
+                            ImGui.EndTooltip();
+                        }
+                    }
+                    ImGui.Checkbox("Do Not Draw 1-Pixel Sprites", ref CHPEditor.Config.DoNotDrawOnePixelSprites);
                 }
                 #endregion
 
@@ -1137,7 +1170,7 @@ namespace CHPEditor
                     {
                         if (!not_drawable)
                             CHPEditor.ChpFile.CharBMP.ImageFile.DrawForImGui(rect, offset.Size);
-                        bounds_crossed = CHPEditor.ChpFile.CharBMP.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharBMP.ImageFile.Image.Height < rect.Max.Y;
+                        bounds_crossed = CHPEditor.ChpFile.CharBMP.ImageFile.Image.Width < rect.Max.X || CHPEditor.ChpFile.CharBMP.ImageFile.Image.Height < rect.Max.Y || rect.Origin.X < 0 || rect.Origin.Y < 0;
                     }
                 }
 

@@ -1,6 +1,6 @@
 ﻿namespace CHPEditor
 {
-    public enum StateNames : int
+    public enum AnimationNames : int
     {
         Neutral,
         Second,
