@@ -1,4 +1,4 @@
-# CHPEditor (0.2.0.0) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
+# CHPEditor (0.2.0.0 - Preview Build #1) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
 ## An (extremely not finished) application for ~~editing~~ previewing CHP (Pomyu Chara) files
 
 ![Screenshot of a preview build of CHPEditor version 0.2.0.0, displaying Balrog from Cave Story doing its Good animation](readme/0.png)
