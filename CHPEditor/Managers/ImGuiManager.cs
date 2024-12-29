@@ -75,6 +75,9 @@ namespace CHPEditor
                     ImGui.MenuItem("New###MENU_FILE_NEW", "CTRL+N", false, false);
                     ImGui.MenuItem("Open###MENU_FILE_OPEN", "CTRL+O", false, false);
                     ImGui.MenuItem("Save###MENU_FILE_SAVE", "CTRL+S", false, false);
+                    if (ImGui.MenuItem("Exit###MENU_FILE_EXIT", "ALT+F4")) {
+                        CHPEditor._window.Close();
+                    }
                     ImGui.EndMenu();
                 }
 

@@ -241,10 +241,15 @@ void main()
 {
     compare = texture(uTexture, frag_texCoords);
 
-    if ((compare-fragColorKey)==0.0)
-        out_color = vec4(1.0, 1.0, 1.0, 0.0);
-    else
-        out_color = vec4(1.0, 1.0, 1.0, fragAlpha) * texture(uTexture, frag_texCoords);
+    if (compare.w == 0.0)
+        out_color = vec4(0.0, 0.0, 0.0, 0.0);
+    else {
+        vec4 compare_color = (compare-fragColorKey);
+        if (abs(compare_color.x + compare_color.y + compare_color.z + compare_color.w)<=0.001)
+            out_color = vec4(0.0, 0.0, 0.0, 0.0);
+        else
+            out_color = vec4(1.0, 1.0, 1.0, fragAlpha) * compare;
+    }
 }";
 
             uint vertexShader = _gl.CreateShader(ShaderType.VertexShader);
