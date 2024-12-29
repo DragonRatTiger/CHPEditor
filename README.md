@@ -8,3 +8,9 @@
 Alongside being a personal project to further study C# & application development, I hope to also create a modern editor for Pomyu Charas.
 
 At this current stage, nothing can actually be edited. The only aspect of this application that works right now is the ability to preview bitmaps & animations. This application does the best that it currently can to preview the animations as-intended by FeelingPomu2nd.
+
+## For Development
+
+In order to develop/build CHPEditor yourself, you must have the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+
+CHPEditor was created primarily to run on Windows, but is also written in a way to have little to no barriers running on Linux.
