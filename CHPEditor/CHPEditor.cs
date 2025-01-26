@@ -478,8 +478,16 @@ void main()
                         };
                     }
 
-                    Rectangle<int> bgdst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x, anchor_y), Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
-                    Rectangle<int> namedst = new Rectangle<int> { Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - Config.NameSize.Width) / 2), anchor_y - Config.NameSize.Height), Size = Config.UseDataSizeForName ? new Vector2D<int>(ChpFile.RectCollection[0].Size.X, ChpFile.RectCollection[0].Size.Y) : new Vector2D<int>(Config.NameSize.Width, Config.NameSize.Height) };
+                    Rectangle<int> bgdst = new Rectangle<int> { 
+                        Origin = new Vector2D<int>(anchor_x, anchor_y), 
+                        Size = Config.UseCharaSizeForBackground ? new Vector2D<int>(ChpFile.Size.Width, ChpFile.Size.Height) : new Vector2D<int>(Config.BackgroundSize.Width, Config.BackgroundSize.Height) };
+
+                    Vector2D<int> namedst_size = Config.UseDataSizeForName ? new(Config.NameSize.Width, Config.NameSize.Height) : ChpFile.RectCollection[0].Size;
+                    Rectangle<int> namedst = new Rectangle<int>
+                    {
+                        Origin = new Vector2D<int>(anchor_x + ((bgdst.Size.X - namedst_size.X) / 2), anchor_y - namedst_size.Y),
+                        Size = namedst_size
+                    };
 
                     // Name logo & background
                     if (state != 13 && !hideBg) // Don't display during Dance
