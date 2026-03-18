@@ -3,7 +3,7 @@
 
 ![Screenshot of a preview build of CHPEditor version 0.2.0.0, displaying Balrog from Cave Story doing its Good animation](readme/0.png)
 
-*Balrog/Barlog (バルログ) from Cave Story (洞窟物語), animated by [Masato Ishio (石王マサト)](http://www8.plala.or.jp/stone-king/)*
+*Balrog/Barlog (バルログ) from Cave Story (洞窟物語), animated by [Masato Ishio (石王マサト)](https://stoneking140.sakura.ne.jp/)*
 
 Alongside being a personal project to further study C# & application development, I hope to also create a modern editor for Pomyu Charas.
 
