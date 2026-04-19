@@ -1,0 +1,3 @@
+files:
+  - source: /CHPEditor/lang/en/*
+    translation: /CHPEditor/lang/%two_letters_code%/%original_file_name%
