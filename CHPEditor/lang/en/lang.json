@@ -8,11 +8,7 @@
     {
       "Font": "font.ttf",
       "Size": 16.0,
-      // Ranges of glyphs to use for your language. Only use what is necessary to avoid bloating memory with unused text.
-      // Available sets: 
-      // "japanese", "chinese_full", "chinese_simplified_common", "cyrillic", "greek", "korean", "thai", "vietnamese"
       "GlyphSets": [ "japanese" ],
-      // Custom glyphs not found in the glyph sets above. Write bytes in string format (i.e. ["0xff00", "0xf000"])
       "CustomGlyphs": []
     }
   ],
