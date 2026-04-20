@@ -1,45 +1,36 @@
 ﻿{
   "Language": "日本語 (Japanese)",
   "InvalidEntry": "INVALID DICTIONARY KEY: {0}",
-
   "DefaultFont": "font.ttf",
-  "DefaultFontSize": 16.0,
+  "DefaultFontSize": 16,
   "Fonts": [
     {
       "Font": "font.ttf",
-      "Size": 16.0,
-      // Ranges of glyphs to use for your language. Only use what is necessary to avoid bloating memory with unused text.
-      // Available sets: 
-      // "japanese", "chinese_full", "chinese_simplified_common", "cyrillic", "greek", "korean", "thai", "vietnamese"
-      "GlyphSets": [ "japanese" ],
-      // Custom glyphs not found in the glyph sets above. Write bytes in string format (i.e. ["0xff00", "0xf000"])
+      "Size": 16,
+      "GlyphSets": [
+      "japanese"
+      ],
       "CustomGlyphs": []
     }
   ],
-
   "Entries": {
     "WINDOW_PREVIEW_SELECTOR_TITLE": "Selector",
     "WINDOW_CHP_INFO_TITLE": "Information",
-
     "TAB_BITMAPS": "Bitmaps",
     "TAB_ANIMATIONS": "Animations",
-
     "ANIMATIONS_PAUSE_PROMPT": "Pause Animation",
     "ANIMATIONS_USE2P_PROMPT": "Use 2P Palette",
     "ANIMATIONS_USE2P_PROMPT_DISABLED": "2P Palette unavailable",
     "CHP_CHARA_LOOP_PROMPT": "Show Loop Only",
     "CHP_CHARA_LOOP_PROMPT_DISABLED": "Loop unavailable",
-
     "CHP_PATH_PROMPT": "パス",
     "CHP_RELOAD_PROMPT": "Reload File",
     "CHP_FILE_LOAD_FAIL": "CHP file could not be loaded.",
     "CHP_FILE_INFO": "{0}",
-
     "CHP_BMP_PATH": "Path: {0}",
     "CHP_BMP_SIZE": "サイズ: {0},{1}",
     "CHP_BMP_COLORKEY": "ColorKey: R{0},G{1},B{2},A{3}",
     "CHP_BMP_PATH_NONE": "None",
-
     "CHP_CHARA_NAME": "キャラの名前: {0}",
     "CHP_CHARA_ARTIST": "制作者名: {0}",
     "CHP_CHARA_TIMELINE": "Timeline: {0}/{1} ({2}s/{3}s)",
@@ -52,12 +43,10 @@
     "CHP_CHARA_ITEM": "#{0}",
     "CHP_CHARA_ITEM_DETAIL": "#{0} ({1})",
     "CHP_CHARA_ANIMATION_NONE": "No Animation Available",
-
     "CHP_CHARA_HIDE_BG_PROMPT": "Hide Background & Name",
     "CHP_CHARA_HIDE_PATTERN_PROMPT": "Hide Pattern",
     "CHP_CHARA_HIDE_TEXTURE_PROMPT": "Hide Texture Count",
     "CHP_CHARA_HIDE_LAYER_PROMPT": "Hide Layer Count",
-
     "STATE_INDEXED": "モーション {0}",
     "STATE_FULL_INDEXED": "モーション {0} ({1})",
     "STATE1_TITLE": "通常1",
@@ -72,7 +61,7 @@
     "STATE10_TITLE": "ダメージ1 (相手FEVER)",
     "STATE11_TITLE": "ダメージ2 (相手GREAT)",
     "STATE12_TITLE": "ダメージ3 (相手GOOD)",
-    "STATE13_TITLE": "未知?",
+    "STATE13_TITLE": "未知",
     "STATE14_TITLE": "ダンス",
     "STATE15_TITLE": "勝ち",
     "STATE16_TITLE": "負け",
