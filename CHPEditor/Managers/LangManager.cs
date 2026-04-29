@@ -60,7 +60,7 @@ namespace CHPEditor
 
         public static void Initalize(string id)
         {
-            string langpath = Path.Combine("lang", id, "lang.json");
+            string langpath = Path.Combine("lang", id, "lang.jsonc");
             if (File.Exists(langpath))
             {
                 var settings = new JsonSerializerSettings()
