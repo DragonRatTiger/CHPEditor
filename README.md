@@ -1,4 +1,5 @@
 # CHPEditor (0.2.0.0 - Preview Build #1) - [Download Latest Release](https://github.com/DragonRatTiger/CHPEditor/releases/latest)
+[![Crowdin](https://badges.crowdin.net/chpeditor/localized.svg)](https://crowdin.com/project/chpeditor)
 ## An (extremely not finished) application for ~~editing~~ previewing CHP (Pomyu Chara) files
 
 ![Screenshot of a preview build of CHPEditor version 0.2.0.0, displaying Balrog from Cave Story doing its Good animation](readme/0.png)
@@ -14,3 +15,5 @@ At this current stage, nothing can actually be edited. The only aspect of this a
 In order to develop/build CHPEditor yourself, you must have the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 CHPEditor was created primarily to run on Windows, but is also written in a way to have little to no barriers running on Linux.
+
+> Currently only tested on Ubuntu via. VirtualBox, your mileage may vary on other distros/VMs.
